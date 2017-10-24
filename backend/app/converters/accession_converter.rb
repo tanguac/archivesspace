@@ -119,6 +119,7 @@ class AccessionConverter < Converter
       'user_defined_enum_4' => 'user_defined.enum_4',
 
       'agent_role' => 'accession.agent_role',
+      'agent_relator' => 'accession.agent_relator',
       'agent_type' => 'agent.agent_type',
 
       'agent_contact_address_1' => 'agent_contact.address_1',
@@ -211,8 +212,12 @@ class AccessionConverter < Converter
 
       :accession => {
         :on_create => Proc.new {|data, obj|
-            if data['agent_role']
+            if data['agent_role'] && data['agent_relator']
+              obj.linked_agents << {'role' => data['agent_role'], 'relator' => data['agent_relator']}
+            elsif data['agent_role'] && !data['agent_relator']
               obj.linked_agents << {'role' => data['agent_role']}
+            elsif !data['agent_role'] && data['agent_relator']
+              obj.linked_agents << {'relator' => data['agent_relator']}
             end
         },
         :on_row_complete => Proc.new { |queue, accession|

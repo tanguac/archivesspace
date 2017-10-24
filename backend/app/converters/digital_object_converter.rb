@@ -30,6 +30,7 @@ class DigitalObjectConverter < Converter
       # 1. Map the cell data to schemas or handlers
 
       'agent_role' => 'd.agent_role',
+      'agent_relator' => 'd.agent_relator',
       'agent_type' => 'agent.agent_type',
 
       'agent_contact_address_1' => 'agent_contact.address_1',
@@ -250,8 +251,12 @@ class DigitalObjectConverter < Converter
             obj.digital_object = {'ref' => do_uri}
           else
 
-            if data['agent_role']
+            if data['agent_role'] && data['agent_relator']
+              obj.linked_agents << {'role' => data['agent_role'], 'relator' => data['agent_relator']}
+            elsif data['agent_role'] && !data['agent_relator']
               obj.linked_agents << {'role' => data['agent_role']}
+            elsif !data['agent_role'] && data['agent_relator']
+              obj.linked_agents << {'relator' => data['agent_relator']}
             end
           end
 
