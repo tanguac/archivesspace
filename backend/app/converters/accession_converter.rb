@@ -141,6 +141,7 @@ class AccessionConverter < Converter
       'agent_name_fuller_form' => 'agent_name.fuller_form',
       'agent_name_name_order' => 'agent_name.name_order',
       'agent_name_number' => 'agent_name.number',
+      'agent_name_title' => 'agent_name.title',
       'agent_name_prefix' => 'agent_name.prefix',
       'agent_name_primary_name' => 'agent_name.primary_name',
       'agent_name_qualifier' => 'agent_name.qualifier',
@@ -154,7 +155,7 @@ class AccessionConverter < Converter
 
       'agent_name_description_note' => 'note_bioghist.content',
       'agent_name_description_citation' => 'note_citation.content',
-      
+
       'subject_source' => 'subject.source',
       'subject_term' => 'subject.term',
       'subject_term_type' => 'subject.term_type',
@@ -177,7 +178,7 @@ class AccessionConverter < Converter
         :on_row_complete => Proc.new {|cache, agent|
           accession = cache.find {|obj| obj.class.record_type == 'accession' }
 
-          if accession 
+          if accession
             accession.linked_agents[0]['ref'] = agent.uri
           else
             cache.reject! {|obj| obj.key == agent.key}
@@ -220,7 +221,7 @@ class AccessionConverter < Converter
           end
         }
       },
-      
+
       :note_bioghist => {
         :on_create => Proc.new {|data, obj|
           obj.subnotes = [{'jsonmodel_type' => 'note_text', 'content' => data['content']}]
@@ -346,10 +347,10 @@ class AccessionConverter < Converter
 
     @date_flip
   end
-  
+
   # need to resue the agent type
   def self.agent_type
-    @agent_type ||= "agent_family" 
+    @agent_type ||= "agent_family"
     @agent_type
   end
 
