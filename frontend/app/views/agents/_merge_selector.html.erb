@@ -1,0 +1,222 @@
+<%= setup_context :object => @agent, :controller => :agents,  :agent_type => @agent.agent_type, :title => "#{I18n.t("actions.merge")} #{I18n.t("agent.agent_type.#{@agent.agent_type}")}" %>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="record-pane">
+      <%= form_for @agent, :as => "agent", :url => {:action => :merge_selector}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
+        <%= form_context :agent, @agent do |form| %>
+          <h2><%= @agent.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
+
+          <%= render_aspace_partial :partial => "shared/flash_messages" %>
+
+
+          <section id="basic_information_left">
+            <h3><%= I18n.t("agent._frontend.section.basic_information") %></h3>
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label"><%= I18n.t("agent.type") %></label>
+              <div class="col-sm-9 label-only"><%= I18n.t("agent.agent_type.#{@agent.agent_type}") %></div>
+            </div>
+            <%= display_audit_info(@agent) %>
+          </section>
+
+
+          <% if @agent.dates_of_existence.length > 0 %>
+            <%= render_aspace_partial :partial => "dates/show", :locals => { :dates => @agent.dates_of_existence, :section_title => I18n.t("agent.dates_of_existence"), :section_id => "dates_of_existence", :context => form } %>
+          <% end %>
+
+          <section id="<%= @agent.agent_type %>_names_left">
+            <h3><%= I18n.t("agent_name._plural") %></h3>
+            <div class="panel-group details" id="agent_name_accordion_left">
+              <% @agent.names.each_with_index do | name, index | %>
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_name_accordion_left" href="#agent_name_<%= index %>_left">
+                      <div class="col-md-1">
+                        <span class="glyphicon"></span>
+                      </div>
+                      <div class="col-md-6">
+                        <%= name['sort_name'] %>
+                      </div>
+                      <div class="col-md-4">
+                        <% if name['authorized'] %><span class="badge"><%= I18n.t("name_person.authorized") %></span><% end %>
+                        <% if name['is_display_name'] %><span class="badge badge-info"><%= I18n.t("name_person.is_display_name") %></span><% end %>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="agent_name_<%= index %>_left" class="accordion-body collapse">
+                    <!--<%= read_only_view(name.to_hash) %>-->
+                    <%= render_aspace_partial :partial => "shared/subrecord_form", :locals => {:form => form, :name => "names", :section_id => "#{@agent.agent_type}_names", :template_erb => "agents/name_forms/#{@agent.agent_type}_merge", :template => "name_#{@agent.agent_type.to_s.gsub("agent_","")}", :help_topic => "#{@agent.agent_type}_names"} %>
+                    <% if name['use_dates'].length > 0 %>
+                      <%= render_aspace_partial :partial => "dates/show", :locals => { :dates => name['use_dates'], :section_id => "name_use_dates", :section_title => I18n.t("agent_name.use_dates"), :context => form } %>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
+
+
+          <% if @agent.agent_contacts.length > 0 %>
+            <%= render_aspace_partial :partial => "agents/contact_details" %>
+
+            <section id="<%= @agent.agent_type %>_contact_details_left">
+              <h3><%= I18n.t("agent_contact._plural") %></h3>
+              <div class="accordion details" id="agent_contact_accordion_left">
+                <% @agent.agent_contacts.each_with_index do | contact, index | %>
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_contact_accordion_left" href="#agent_contact_<%= index %>_left">
+                        <div class="col-md-1">
+                          <span class="glyphicon"></span>
+                        </div>
+                        <div class="col-md-7">
+                          <%= contact['name'] %>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="agent_contact_<%= index %>_left" class="accordion-body collapse">
+                      <%= form_context :agent_contact, contact do |form_contact| %>
+                        <%= form_contact.emit_template("agent_contact") %>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </section>
+
+          <% end %>
+
+          <% if @agent.notes.length > 0 %>
+            <%= render_aspace_partial :partial => "notes/show", :locals => { :notes => @agent.notes, :context => form, :section_id => "#{@agent.agent_type}_notes" } %>
+          <% end %>
+
+          <% if !@agent['related_agents'].blank? %>
+            <%= render_aspace_partial :partial => "related_agents/show", :locals => { :related_agents => @agent.related_agents, :context => form } %>
+          <% end %>
+
+          <% if @agent.external_documents.length > 0 %>
+            <%= render_aspace_partial :partial => "external_documents/show", :locals => { :external_documents => @agent.external_documents, :section_id => "#{@agent.agent_type}_external_documents" } %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="record-pane">
+      <%= form_for @victim, :as => "agent", :url => {:action => :merge_selector}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
+        <%= form_context :agent, @victim do |form| %>
+          <h2><%= @victim.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
+
+          <%= render_aspace_partial :partial => "shared/flash_messages" %>
+
+
+          <section id="basic_information_right">
+            <h3><%= I18n.t("agent._frontend.section.basic_information") %></h3>
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label"><%= I18n.t("agent.type") %></label>
+              <div class="col-sm-9 label-only"><%= I18n.t("agent.agent_type.#{@agent.agent_type}") %></div>
+            </div>
+            <%= display_audit_info(@victim) %>
+          </section>
+
+
+          <% if @victim.dates_of_existence.length > 0 %>
+            <%= render_aspace_partial :partial => "dates/show", :locals => { :dates => @victim.dates_of_existence, :section_title => I18n.t("agent.dates_of_existence"), :section_id => "dates_of_existence", :context => form } %>
+          <% end %>
+
+          <section id="<%= @victim.agent_type %>_names_right">
+            <h3><%= I18n.t("agent_name._plural") %></h3>
+            <div class="panel-group details" id="agent_name_accordion_right">
+              <% @victim.names.each_with_index do | name, index | %>
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_name_accordion_right" href="#agent_name_<%= index %>_right">
+                      <div class="col-md-1">
+                        <span class="glyphicon"></span>
+                      </div>
+                      <div class="col-md-6">
+                        <%= name['sort_name'] %>
+                      </div>
+                      <div class="col-md-4">
+                        <% if name['authorized'] %><span class="badge"><%= I18n.t("name_person.authorized") %></span><% end %>
+                        <% if name['is_display_name'] %><span class="badge badge-info"><%= I18n.t("name_person.is_display_name") %></span><% end %>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="agent_name_<%= index %>_right" class="accordion-body collapse">
+                    <!--<%= merge_victim_view(name.to_hash) %>-->
+                    <%= render_aspace_partial :partial => "shared/subrecord_form", :locals => {:form => form, :name => "names", :section_id => "#{@agent.agent_type}_names", :template_erb => "agents/name_forms/#{@agent.agent_type}_merge", :template => "name_#{@agent.agent_type.to_s.gsub("agent_","")}", :help_topic => "#{@agent.agent_type}_names"} %>
+                    <% if name['use_dates'].length > 0 %>
+                      <%= render_aspace_partial :partial => "dates/show", :locals => { :dates => name['use_dates'], :section_id => "name_use_dates", :section_title => I18n.t("agent_name.use_dates"), :context => form } %>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
+
+
+          <% if @victim.agent_contacts.length > 0 %>
+            <%= render_aspace_partial :partial => "agents/contact_details" %>
+
+            <section id="<%= @victim.agent_type %>_contact_details_right">
+              <h3><%= I18n.t("agent_contact._plural") %></h3>
+              <div class="accordion details" id="agent_contact_accordion_right">
+                <% @victim.agent_contacts.each_with_index do | contact, index | %>
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_contact_accordion_right" href="#agent_contact_<%= index %>_right">
+                        <div class="col-md-1">
+                          <span class="glyphicon"></span>
+                        </div>
+                        <div class="col-md-7">
+                          <%= contact['name'] %>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="agent_contact_<%= index %>_right" class="accordion-body collapse">
+                      <%= form_context :agent_contact, contact do |form_contact| %>
+                        <%= form_contact.emit_template("agent_contact") %>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </section>
+
+          <% end %>
+
+          <% if @victim.notes.length > 0 %>
+            <%= render_aspace_partial :partial => "notes/show", :locals => { :notes => @victim.notes, :context => form, :section_id => "#{@victim.agent_type}_notes" } %>
+          <% end %>
+
+          <% if !@victim['related_agents'].blank? %>
+            <%= render_aspace_partial :partial => "related_agents/show", :locals => { :related_agents => @victim.related_agents, :context => form } %>
+          <% end %>
+
+          <% if @victim.external_documents.length > 0 %>
+            <%= render_aspace_partial :partial => "external_documents/show", :locals => { :external_documents => @agent.external_documents, :section_id => "#{@victim.agent_type}_external_documents" } %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+  <div class="form-actions">
+          <%=
+             button_confirm_action(I18n.t("actions.merge"),
+                                   url_for(:controller => :agents, :action => :merge_detail, :id => @agent.id),
+                                   {
+                                     :class => "btn pull-left merge-button btn-default",
+                                     #:"data-title" => confirmation_title,
+                                     #:"data-message" => confirmation_msg,
+                                     :"data-confirm-btn-label" => "#{I18n.t("actions.merge")}",
+                                     :"data-confirm-btn-class" => "btn btn-default"
+                                   })
+          %>
+          <button type="submit" class="btn btn-primary"><%= I18n.t("#{@agent.agent_type}._frontend.action.save") %></button>
+          <a class="btn btn-cancel btn-default pull-right" href="#"><%= I18n.t("actions.cancel") %></a>
+        </div>
+</div>
+ 
