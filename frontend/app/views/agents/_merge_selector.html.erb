@@ -46,7 +46,7 @@
                   </div>
                   <div id="agent_name_<%= index %>_left" class="accordion-body collapse">
                     <!--<%= read_only_view(name.to_hash) %>-->
-                    <%= render_aspace_partial :partial => "shared/subrecord_form", :locals => {:form => form, :name => "names", :section_id => "#{@agent.agent_type}_names", :template_erb => "agents/name_forms/#{@agent.agent_type}_merge", :template => "name_#{@agent.agent_type.to_s.gsub("agent_","")}", :help_topic => "#{@agent.agent_type}_names"} %>
+                    <%= render_aspace_partial :partial => "shared/subrecord_form", :locals => {:form => form, :name => "names", :section_id => "#{@agent.agent_type}_names", :template_erb => "agents/name_forms/#{@agent.agent_type}", :template => "name_#{@agent.agent_type.to_s.gsub("agent_","")}", :help_topic => "#{@agent.agent_type}_names"} %>
                     <% if name['use_dates'].length > 0 %>
                       <%= render_aspace_partial :partial => "dates/show", :locals => { :dates => name['use_dates'], :section_id => "name_use_dates", :section_title => I18n.t("agent_name.use_dates"), :context => form } %>
                     <% end %>
@@ -206,7 +206,7 @@
   <div class="form-actions">
           <%=
              button_confirm_action(I18n.t("actions.merge"),
-                                   url_for(:controller => :agents, :action => :merge_detail, :id => @agent.id),
+                                   url_for(:controller => :agents, :action => :merge_preview, :id => @agent.id),
                                    {
                                      :class => "btn pull-left merge-button btn-default",
                                      #:"data-title" => confirmation_title,

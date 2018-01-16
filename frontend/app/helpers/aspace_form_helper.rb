@@ -498,6 +498,44 @@ module AspaceFormHelper
     end
   end
 
+  def merge_victim_view(hash, opts = {})
+    jsonmodel_type = hash["jsonmodel_type"]
+    schema = JSONModel(jsonmodel_type).schema
+    prefix = opts[:plugin] ? 'plugins.' : ''
+    html = "<div class='form-horizontal'>"
+
+    hash.reject {|k,v| PROPERTIES_TO_EXCLUDE_FROM_READ_ONLY_VIEW.include?(k)}.each do |property, value|
+
+      if schema and schema["properties"].has_key?(property)
+        if (schema["properties"][property].has_key?('dynamic_enum'))
+          value = I18n.t({:enumeration => schema["properties"][property]["dynamic_enum"], :value => value}, :default => value)
+        elsif schema["properties"][property].has_key?("enum")
+          value = I18n.t("#{prefix}#{jsonmodel_type.to_s}.#{property}_#{value}", :default => value)
+        elsif schema["properties"][property]["type"] === "boolean"
+          value = value === true ? "True" : "False"
+        elsif schema["properties"][property]["type"] === "date"
+          value = value.blank? ? "" : Date.strptime(value, "%Y-%m-%d")
+        elsif schema["properties"][property]["type"] === "array"
+          # this view doesn't support arrays
+          next
+        elsif value.kind_of? Hash
+          # can't display an object either
+          next
+        end
+      end
+
+      html << "<div class='form-group'>"
+      html << "<div class='control-label col-sm-2'>#{I18n.t("#{prefix}#{jsonmodel_type.to_s}.#{property}")}</div>"
+      html << "<div class='label-only col-sm-8'>#{value}</div>"
+      html << "</div>"
+
+    end
+
+    html << "</div>"
+
+    html.html_safe
+  end
+
 
   class ReadOnlyContext < FormContext
 

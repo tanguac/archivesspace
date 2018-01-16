@@ -1,7 +1,7 @@
 class AgentsController < ApplicationController
 
   set_access_control  "view_repository" => [:index, :show],
-                      "update_agent_record" => [:new, :edit, :create, :update, :merge],
+                      "update_agent_record" => [:new, :edit, :create, :update, :merge, :merge_selector, :merge_preview],
                       "delete_agent_record" => [:delete],
                       "manage_repository" => [:defaults, :update_defaults, :required, :update_required]
 
@@ -189,8 +189,14 @@ class AgentsController < ApplicationController
     @agent = JSONModel(@agent_type).find(params[:id], find_opts)
     victim_id = params[:refs].split('/')[-1]
     @victim = JSONModel(@agent_type).find(victim_id, find_opts)
-    render :text => @agent
+    render :text => params[:refs]
     #render '_merge_selector'
+  end
+
+  def merge_preview
+    @agent = JSONModel(@agent_type).find(params[:id], find_opts)
+    
+    render :text => params[:refs]
   end
 
 
