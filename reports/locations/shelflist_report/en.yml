@@ -1,3 +1,17 @@
 en:
   reports:
     shelflist_report:
+      title: Shelflist Report
+      description: Displays a list of locations and their associated top containers.
+      total_count: Number of Results
+      temporary_location: Temporary LocationList
+      building: Building
+      floor: Floor
+      room: Room
+      area: Area
+      location_barcode: Location Barcode
+      coordinates: Coordinates
+      barcode: Barcode
+      classification_number: Classification number
+      accessions: Accessions
+      resources: Resources
