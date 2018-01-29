@@ -40,6 +40,33 @@ class ArchivesSpaceService < Sinatra::Base
     json_response(:status => "OK")
   end
 
+  Endpoint.post('/merge_requests/agent_detail')
+  .description("Carry out a detailed merge request against Agent records")
+  .params(["dry_run", BooleanParam, "If true, don't process the merge, just display the merged record", :optional => true],
+          ["merge_request_detail",
+             JSONModel(:merge_request_detail), "A detailed merge request",
+             :body => true])
+  .permissions([:merge_agent_record])
+  .returns([200, :updated]) \
+  do
+    target, victims = parse_references(params[:merge_request_detail])
+
+    if (victims.map {|r| r[:type]} + [target[:type]]).any? {|type| !AgentManager.known_agent_type?(type)}
+      raise BadParamsException.new(:merge_request_detail => ["Agent merge request can only merge agent records"])
+    end
+
+    agent_model = AgentManager.model_for(target[:type])
+
+    if params[:dry_run]
+      result = agent_model.get_or_die(target[:id])
+      result = agent_model.to_jsonmodel(result)
+    else
+      pass
+    end
+
+    json_response(result)
+    #result
+  end
 
   Endpoint.post('/merge_requests/resource')
     .description("Carry out a merge request against Resource records")

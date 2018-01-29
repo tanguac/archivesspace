@@ -272,6 +272,31 @@ module AspaceFormHelper
       label_with_field(name, value.blank? ? default : value , opts)
     end
 
+    def label_and_merge_select(name, default = "", opts = {})
+      value = obj[name]
+
+      if opts.has_key? :controls_class
+        opts[:controls_class] << " label-only"
+      else
+        opts[:controls_class] = " label-only"
+      end
+
+      if value.blank?
+        label_with_field(name, value.blank? ? default : value , opts)
+      else
+        label_with_field(name, merge_select(name, value, opts[:field_opts] || {}), opts)
+      end
+    end
+
+    def merge_select(name, value, opts = {})
+      value += "<label>".html_safe
+      value += checkbox("#{name}_replace", {
+        :class => "merge-toggle"}, false, false)
+      value += "&#160;<small>".html_safe
+      value += I18n.t("actions.merge_replace")
+      value += "</small></label>".html_safe
+    end
+
 
     def combobox(name, options, opts = {})
       select(name, options, opts.merge({:"data-combobox" => true}))

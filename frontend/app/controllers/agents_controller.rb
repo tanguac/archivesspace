@@ -1,7 +1,7 @@
 class AgentsController < ApplicationController
 
   set_access_control  "view_repository" => [:index, :show],
-                      "update_agent_record" => [:new, :edit, :create, :update, :merge, :merge_selector, :merge_preview],
+                      "update_agent_record" => [:new, :edit, :create, :update, :merge, :merge_selector, :merge_detail, :merge_preview],
                       "delete_agent_record" => [:delete],
                       "manage_repository" => [:defaults, :update_defaults, :required, :update_required]
 
@@ -189,14 +189,31 @@ class AgentsController < ApplicationController
     @agent = JSONModel(@agent_type).find(params[:id], find_opts)
     victim_id = params[:refs].split('/')[-1]
     @victim = JSONModel(@agent_type).find(victim_id, find_opts)
-    render :text => params[:refs]
-    #render '_merge_selector'
+    #render :text => params[:refs]
+    render '_merge_selector'
   end
 
-  def merge_preview
-    @agent = JSONModel(@agent_type).find(params[:id], find_opts)
-    
-    render :text => params[:refs]
+  def merge_detail
+    request = JSONModel(:merge_request_detail).new
+    request.target = {'ref' => JSONModel(@agent_type).uri_for(params[:id])}
+    request.victims = Array.wrap({ 'ref' => params['victim_uri'] })
+    request.selections = cleanup_params_for_schema(params['agent'], JSONModel(@agent_type).schema)
+
+    uri = "#{JSONModel::HTTP.backend_url}/merge_requests/agent_detail"
+    if params["dry_run"]
+      uri += "?dry_run=true"
+    end
+    response = JSONModel::HTTP.post_json(URI(uri), request.to_json)
+
+    #@preview = JSONModel(@agent_type).from_json(response)
+    merge_response = ASUtils.json_parse(response.body)
+    #merge_response = response.body
+
+    if params["dry_run"]
+      render_aspace_partial :partial => "agents/merge_preview", :locals => {:fields => merge_response}
+    else
+      pass
+    end
   end
 
 
