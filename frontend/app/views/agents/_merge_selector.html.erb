@@ -3,7 +3,7 @@
 <div class="row">
   <div class="col-md-6">
     <div class="record-pane">
-      <%= form_for @agent, :as => "agent", :url => {:action => :merge_selector}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
+      <%= form_for @agent, :as => "agent", :url => {:action => :merge_detail}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
         <%= form_context :agent, @agent do |form| %>
           <h2><%= @agent.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
 
@@ -104,8 +104,10 @@
   </div>
   <div class="col-md-6">
     <div class="record-pane">
-      <%= form_for @victim, :as => "agent", :url => {:action => :merge_selector}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
+      <%= @victim %>
+      <%= form_for @victim, :as => "agent", :url => {:action => :merge_detail}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
         <%= form_context :agent, @victim do |form| %>
+          <input type='hidden' name='victim_uri' value='<%= @victim.uri %>' />
           <h2><%= @victim.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
 
           <%= render_aspace_partial :partial => "shared/flash_messages" %>
@@ -215,6 +217,7 @@
                                      :"data-confirm-btn-class" => "btn btn-default"
                                    })
           %>
+          <button type="button" class="btn preview-merge"><%= I18n.t("agent._frontend.action.preview") %></button>
           <button type="submit" class="btn btn-primary"><%= I18n.t("#{@agent.agent_type}._frontend.action.save") %></button>
           <a class="btn btn-cancel btn-default pull-right" href="#"><%= I18n.t("actions.cancel") %></a>
         </div>
