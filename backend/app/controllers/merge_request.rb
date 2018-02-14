@@ -51,21 +51,31 @@ class ArchivesSpaceService < Sinatra::Base
   do
     target, victims = parse_references(params[:merge_request_detail])
 
+    selections = parse_selections(params[:merge_request_detail].selections)
+
+
     if (victims.map {|r| r[:type]} + [target[:type]]).any? {|type| !AgentManager.known_agent_type?(type)}
       raise BadParamsException.new(:merge_request_detail => ["Agent merge request can only merge agent records"])
     end
 
     agent_model = AgentManager.model_for(target[:type])
+    #agent_model = AgentManager.model_for(victims[0][:type])
+
+    target = agent_model.get_or_die(target[:id])
+    target = agent_model.to_jsonmodel(target)
+
+    victim = agent_model.get_or_die(victims[0][:id])
+    victim = agent_model.to_jsonmodel(victim)
+
+    new_target = merge_details(target, victim, selections)
 
     if params[:dry_run]
-      result = agent_model.get_or_die(target[:id])
-      result = agent_model.to_jsonmodel(result)
+      result = new_target
     else
       pass
     end
 
-    json_response(result)
-    #result
+    json_response(resolve_references(result, ['related_agents']))
   end
 
   Endpoint.post('/merge_requests/resource')
@@ -133,5 +143,67 @@ class ArchivesSpaceService < Sinatra::Base
       raise BadParamsException.new(:merge_request => ["This merge request can only merge #{type} records"])
     end
   end
+
+  def parse_selections(selections, path=[], all_values={})
+    selections.each_pair do |k, v|
+      path << k
+      case v
+        when String
+          if v === "REPLACE"
+            all_values.merge!({"#{path.join(".")}" => "#{v}"})
+            path.pop
+          else
+            path.pop
+            next
+          end
+        when Hash then parse_selections(v, path, all_values)
+        when Array then v.each_with_index do |v2, index|
+          path << index
+          parse_selections(v2, path, all_values)
+        end
+        else 
+          path.pop
+          next
+      end
+    end
+    path.pop
+
+    return all_values
+  end 
+
+  def merge_details(target, victim, selections)
+    selections.each_key do |key|
+      path = key.split(".")
+      path_fix = []
+      path.each do |part|
+        if part.length === 1
+          part = part.to_i
+        end
+        path_fix.push(part)
+      end
+      path_fix.each do |p|
+        puts p
+        puts p.class
+      end
+      path_length = path.length 
+      case path_length 
+        when 1 
+          target[path_fix[0]] = victim[path_fix[0]]
+        when 2 
+          target[path_fix[0]][path_fix[1]] = victim[path_fix[0]][path_fix[1]]
+        when 3
+          target[path_fix[0]][path_fix[1]][path_fix[2]] = victim[path_fix[0]][path_fix[1]][path_fix[2]]
+        when 4
+          target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]]
+        when 5
+          target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]]
+        when 6
+          target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]][path_fix[5]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]][path_fix[5]]
+      end
+
+    end
+    target
+  end
+
 
 end

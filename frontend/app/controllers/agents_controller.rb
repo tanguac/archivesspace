@@ -207,10 +207,11 @@ class AgentsController < ApplicationController
 
     #@preview = JSONModel(@agent_type).from_json(response)
     merge_response = ASUtils.json_parse(response.body)
-    #merge_response = response.body
+    @agent = JSONModel(@agent_type).from_hash(merge_response, find_opts)
 
     if params["dry_run"]
-      render_aspace_partial :partial => "agents/merge_preview", :locals => {:fields => merge_response}
+      render_aspace_partial :partial => "agents/merge_preview", :locals => {:object => @agent}
+      #render_aspace_partial :partial => "agents/merge_preview", :locals => {:merge_response => merge_response}
     else
       pass
     end
