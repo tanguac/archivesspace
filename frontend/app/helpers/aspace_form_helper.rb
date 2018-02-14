@@ -285,7 +285,7 @@ module AspaceFormHelper
 
     def merge_select(name, value, opts = {})
       value += "<label>".html_safe
-      value += checkbox("#{name}_replace", {
+      value += merge_checkbox("#{name}", {
         :class => "merge-toggle"}, false, false)
       value += "&#160;<small>".html_safe
       value += I18n.t("actions.merge_replace")
@@ -427,6 +427,12 @@ module AspaceFormHelper
       @forms.tag("input", options.merge(opts), false, false)
     end
 
+    def merge_checkbox(name, opts = {}, default = true, force_checked = false)
+      options = {:id => "#{id_for(name)}", :type => "checkbox", :name => path(name), :value => "REPLACE"}
+      options[:checked] = "checked" if force_checked or (obj[name] === true) or (obj[name].is_a? String and obj[name].start_with?("true")) or (obj[name] === "MERGE") or (obj[name].nil? and default)
+
+      @forms.tag("input", options.merge(opts), false, false)
+    end
 
     def radio(name, value, opts = {})
       options = {:id => "#{id_for(name)}", :type => "radio", :name => path(name), :value => value}

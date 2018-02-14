@@ -104,7 +104,6 @@
   </div>
   <div class="col-md-6">
     <div class="record-pane">
-      <%= @victim %>
       <%= form_for @victim, :as => "agent", :url => {:action => :merge_detail}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
         <%= form_context :agent, @victim do |form| %>
           <input type='hidden' name='victim_uri' value='<%= @victim.uri %>' />
