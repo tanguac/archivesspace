@@ -74,7 +74,24 @@ class ArchivesSpaceService < Sinatra::Base
     else
       pass
     end
+    #result.test()
+    '''result = result.auto_generate(:property => :sort_name,
+                :generator => proc  { |json|
+                  result = ""
 
+                  result << "#{json["primary_name"]}" if json["primary_name"]
+                  result << ". #{json["subordinate_name_1"]}" if json["subordinate_name_1"]
+                  result << ". #{json["subordinate_name_2"]}" if json["subordinate_name_2"]
+
+                  grouped = [json["number"], json["dates"]].reject{|v| v.nil?}
+                  result << " (#{grouped.join(" : ")})" if not grouped.empty?
+
+                  result << " (#{json["qualifier"]})" if json["qualifier"]
+
+                  result.length > 255 ? result[0..254] : result
+                },
+                :only_if => proc { |json| json["sort_name_auto_generate"] }
+    )'''
     json_response(resolve_references(result, ['related_agents']))
   end
 
@@ -182,8 +199,6 @@ class ArchivesSpaceService < Sinatra::Base
         path_fix.push(part)
       end
       path_fix.each do |p|
-        puts p
-        puts p.class
       end
       path_length = path.length 
       case path_length 
@@ -202,6 +217,12 @@ class ArchivesSpaceService < Sinatra::Base
       end
 
     end
+    target = add_victim_related(target, victim)
+    target
+  end
+
+  def add_victim_related(target, victim)
+    target['related_agents'].push(*victim['related_agents'])
     target
   end
 
