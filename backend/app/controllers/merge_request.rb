@@ -162,6 +162,9 @@ class ArchivesSpaceService < Sinatra::Base
   end
 
   def parse_selections(selections, path=[], all_values={})
+    puts "\n\n\n\n\n\n\n"
+    puts selections
+    puts "\n\n\n\n\n\n\n"
     selections.each_pair do |k, v|
       path << k
       case v
@@ -177,6 +180,7 @@ class ArchivesSpaceService < Sinatra::Base
         when Array then v.each_with_index do |v2, index|
           path << index
           parse_selections(v2, path, all_values)
+          path.pop
         end
         else 
           path.pop
@@ -189,6 +193,9 @@ class ArchivesSpaceService < Sinatra::Base
   end 
 
   def merge_details(target, victim, selections)
+    puts "\n\n\n\n\n\n\n"
+    puts selections
+    puts "\n\n\n\n\n\n\n"
     selections.each_key do |key|
       path = key.split(".")
       path_fix = []
@@ -198,31 +205,29 @@ class ArchivesSpaceService < Sinatra::Base
         end
         path_fix.push(part)
       end
-      path_fix.each do |p|
+      path_fix_length = path_fix.length 
+      if path_fix[0] != 'related_agents' && path_fix[0] != 'external_documents' && path_fix[0] != 'notes'
+        case path_fix_length 
+          when 1 
+            target[path_fix[0]] = victim[path_fix[0]]
+          when 2 
+            target[path_fix[0]][path_fix[1]] = victim[path_fix[0]][path_fix[1]]
+          when 3
+            target[path_fix[0]][path_fix[1]][path_fix[2]] = victim[path_fix[0]][path_fix[1]][path_fix[2]]
+          when 4
+            target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]]
+          when 5
+            target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]]
+        end
+      elsif path_fix[0] === 'related_agents'
+        target['related_agents'].push(victim['related_agents'][path_fix[1]])
+      elsif path_fix[0] === 'external_documents'
+        target['external_documents'].push(victim['external_documents'][path_fix[1]])
+      elsif path_fix[0] === 'notes'
+        target['notes'].push(victim['notes'][path_fix[1]])
       end
-      path_length = path.length 
-      case path_length 
-        when 1 
-          target[path_fix[0]] = victim[path_fix[0]]
-        when 2 
-          target[path_fix[0]][path_fix[1]] = victim[path_fix[0]][path_fix[1]]
-        when 3
-          target[path_fix[0]][path_fix[1]][path_fix[2]] = victim[path_fix[0]][path_fix[1]][path_fix[2]]
-        when 4
-          target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]]
-        when 5
-          target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]]
-        when 6
-          target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]][path_fix[5]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]][path_fix[5]]
-      end
-
+    target['title'] = target['names'][0]['sort_name']
     end
-    target = add_victim_related(target, victim)
-    target
-  end
-
-  def add_victim_related(target, victim)
-    target['related_agents'].push(*victim['related_agents'])
     target
   end
 

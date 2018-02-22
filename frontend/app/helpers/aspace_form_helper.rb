@@ -297,7 +297,6 @@ module AspaceFormHelper
       value += "</small></label>".html_safe
     end
 
-
     def combobox(name, options, opts = {})
       select(name, options, opts.merge({:"data-combobox" => true}))
     end
@@ -442,7 +441,7 @@ module AspaceFormHelper
 
     def merge_checkbox(name, opts = {}, default = true, force_checked = false)
       options = {:id => "#{id_for(name)}", :type => "checkbox", :name => path(name), :value => "REPLACE"}
-      options[:checked] = "checked" if force_checked or (obj[name] === true) or (obj[name].is_a? String and obj[name].start_with?("true")) or (obj[name] === "MERGE") or (obj[name].nil? and default)
+      options[:checked] = "checked" if force_checked or (obj[name] === true) or (obj[name].is_a? String and obj[name].start_with?("true")) or (obj[name] === "REPLACE") or (obj[name].nil? and default)
 
       @forms.tag("input", options.merge(opts), false, false)
     end

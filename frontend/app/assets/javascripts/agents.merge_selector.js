@@ -9,6 +9,8 @@
 //= require rights_statements.crud
 //= require add_event_dropdown
 //= require notes_override.crud
+//= require embedded_search
+
 $(function() {
   console.log($(this))
   $("button.preview-merge").on("click", function() {
