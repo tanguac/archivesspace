@@ -2,12 +2,10 @@
   <div class="subrecord-form-fields agent-name-form">
     <h4 class="subrecord-form-heading">
       <span class="badge badge-info is-authoritive-label"><%= I18n.t("name_person.authorized") %></span>
-      <button class="btn btn-small btn-authoritive-name-toggle"><%= I18n.t("name._frontend.action.make_authorized") %></button>
       <span class="badge badge-info is-display-name-label"><%= I18n.t("name_person.is_display_name") %></span>
-      <button class="btn btn-small btn-display-name-toggle"><%= I18n.t("name._frontend.action.make_display_name") %></button>
     </h4>
 
-    <%= render_aspace_partial :partial => "agents/name_forms/authority_fields", :locals => {:form => form} %>
+    <%= render_aspace_partial :partial => "agents/name_forms/authority_fields_merge", :locals => {:form => form} %>
 
     <%= form.label_and_merge_select "name_order" %>                  
     <%= form.label_and_merge_select "prefix" %>
@@ -20,7 +18,7 @@
     <%= form.label_and_merge_select "dates" %>
     <hr/>
     <%= form.label_and_merge_select "qualifier" %>
-    <%= form.label_and_textfield "sort_name", {:field_opts => {:automatable => true}, :required => :conditionally}%>
-    <%= render_aspace_partial :partial => "shared/subrecord_form", :locals => {:form => form, :name => "use_dates", :template_erb => "dates/template", :template => "usage_date", :heading_text => I18n.t("name._frontend.section.use_date"), :heading_size => "h4", :template_overrides => {"date_label" => "agents/name_forms/date_labels"}} %>
+    <%= form.label_and_merge_select "sort_name" %>
+    <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "use_dates", :template_erb => "dates/template_merge", :template => "usage_date", :heading_text => I18n.t("name._frontend.section.use_date"), :heading_size => "h4", :template_overrides => {"date_label" => "agents/name_forms/date_labels"}} %>
   </div>
 <% end %>
