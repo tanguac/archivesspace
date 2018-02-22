@@ -213,11 +213,25 @@ class ArchivesSpaceService < Sinatra::Base
           when 2 
             target[path_fix[0]][path_fix[1]] = victim[path_fix[0]][path_fix[1]]
           when 3
-            target[path_fix[0]][path_fix[1]][path_fix[2]] = victim[path_fix[0]][path_fix[1]][path_fix[2]]
+            begin
+              target[path_fix[0]][path_fix[1]][path_fix[2]] = victim[path_fix[0]][path_fix[1]][path_fix[2]]
+            rescue
+              if target[path_fix[0]] === []
+                target[path_fix[0]].push(victim[path_fix[0]][path_fix[1]])
+              end
+            end
           when 4
             target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]]
           when 5
-            target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]]
+            begin
+              target[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]] = victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]][path_fix[4]]
+            rescue
+              if target[path_fix[0]] === []
+                target[path_fix[0]].push(victim[path_fix[0]][path_fix[1]])
+              elsif target[path_fix[0]][path_fix[1]][path_fix[2]] === []
+                target[path_fix[0]][path_fix[1]][path_fix[2]].push(victim[path_fix[0]][path_fix[1]][path_fix[2]][path_fix[3]])
+              end
+            end
         end
       elsif path_fix[0] === 'related_agents'
         target['related_agents'].push(victim['related_agents'][path_fix[1]])
