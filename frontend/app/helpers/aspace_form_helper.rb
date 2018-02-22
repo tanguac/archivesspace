@@ -262,6 +262,10 @@ module AspaceFormHelper
 
     def label_and_readonly(name, default = "", opts = {})
       value = obj[name]
+      if !(value.is_a? String)
+        value = value.to_s
+      end
+      
 
       if opts.has_key? :controls_class
         opts[:controls_class] << " label-only"
