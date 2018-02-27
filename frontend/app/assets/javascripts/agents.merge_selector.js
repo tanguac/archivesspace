@@ -31,4 +31,8 @@ $(function() {
     });
   });
 
+  $("button.do-merge").on("click", function() {
+    $("form:eq( 4 )").submit();
+  });
+
 });

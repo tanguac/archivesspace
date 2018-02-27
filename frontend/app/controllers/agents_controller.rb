@@ -202,19 +202,37 @@ class AgentsController < ApplicationController
     uri = "#{JSONModel::HTTP.backend_url}/merge_requests/agent_detail"
     if params["dry_run"]
       uri += "?dry_run=true"
-    end
-    response = JSONModel::HTTP.post_json(URI(uri), request.to_json)
+      puts "\n\n\n\n\n\n\n\n"
+      puts request
+      puts "\n\n\n\n\n\n\n\n"
+      response = JSONModel::HTTP.post_json(URI(uri), request.to_json)
 
-    #@preview = JSONModel(@agent_type).from_json(response)
-    merge_response = ASUtils.json_parse(response.body)
-    @agent = JSONModel(@agent_type).from_hash(merge_response, find_opts)
-
-    if params["dry_run"]
+      #@preview = JSONModel(@agent_type).from_json(response)
+      merge_response = ASUtils.json_parse(response.body)
+      @agent = JSONModel(@agent_type).from_hash(merge_response, find_opts)
       render_aspace_partial :partial => "agents/merge_preview", :locals => {:object => @agent}
-      #render_aspace_partial :partial => "agents/merge_preview", :locals => {:merge_response => merge_response}
     else
-      pass
+      puts "\n\n\n\n\n\n\n\n"
+      puts request.to_json
+      puts "\n\n\n\n\n\n\n\n"
+      JSONModel::HTTP.post_json(URI(uri), request.to_json)
+      begin
+        flash[:success] = I18n.t("agent._frontend.messages.merged")
+
+        resolver = Resolver.new(request.target["ref"])
+        redirect_to(resolver.view_uri)
+      rescue ValidationException => e
+        flash[:error] = e.errors.to_s
+        redirect_to({:action => :show, :id => params[:id]}.merge(extra_params))
+      rescue ConflictException => e
+        flash[:error] = I18n.t("errors.merge_conflict", :message => e.conflicts)
+        redirect_to({:action => :show, :id => params[:id]}.merge(extra_params))
+      rescue RecordNotFound => e
+        flash[:error] = I18n.t("errors.error_404")
+        redirect_to({:action => :show, :id => params[:id]}.merge(extra_params))
+      end
     end
+    
   end
 
 
