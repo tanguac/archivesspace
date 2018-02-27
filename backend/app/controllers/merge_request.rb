@@ -61,37 +61,35 @@ class ArchivesSpaceService < Sinatra::Base
     agent_model = AgentManager.model_for(target[:type])
     #agent_model = AgentManager.model_for(victims[0][:type])
 
-    target = agent_model.get_or_die(target[:id])
-    target = agent_model.to_jsonmodel(target)
+    target = agent_model.get_or_die(target[:id]) 
 
     victim = agent_model.get_or_die(victims[0][:id])
-    victim = agent_model.to_jsonmodel(victim)
-
-    new_target = merge_details(target, victim, selections)
-
     if params[:dry_run]
+      target = agent_model.to_jsonmodel(target)
+      victim = agent_model.to_jsonmodel(victim)
+      new_target = merge_details(target, victim, selections)
       result = new_target
     else
-      pass
+      puts "\n\n\n\n\n\n"
+      puts "hellloooo I made it!!!!!!!"
+      puts "\n\n\n\n\n\n"
+      target_json = agent_model.to_jsonmodel(target)
+      victim_json = agent_model.to_jsonmodel(victim)
+      new_target = merge_details(target_json, victim_json, selections)
+      target.assimilate((victims.map {|v|
+                                       AgentManager.model_for(v[:type]).get_or_die(v[:id])
+                                     }))
+      puts "\n\n\n\n\n\n"
+      puts new_target
+      puts "\n\n\n\n\n\n"
+
+      target.update_from_json(new_target)
+      puts "\n\n\n\n\n\n"
+      puts target
+      puts "\n\n\n\n\n\n"
+      json_response(:status => "OK")
     end
-    #result.test()
-    '''result = result.auto_generate(:property => :sort_name,
-                :generator => proc  { |json|
-                  result = ""
 
-                  result << "#{json["primary_name"]}" if json["primary_name"]
-                  result << ". #{json["subordinate_name_1"]}" if json["subordinate_name_1"]
-                  result << ". #{json["subordinate_name_2"]}" if json["subordinate_name_2"]
-
-                  grouped = [json["number"], json["dates"]].reject{|v| v.nil?}
-                  result << " (#{grouped.join(" : ")})" if not grouped.empty?
-
-                  result << " (#{json["qualifier"]})" if json["qualifier"]
-
-                  result.length > 255 ? result[0..254] : result
-                },
-                :only_if => proc { |json| json["sort_name_auto_generate"] }
-    )'''
     json_response(resolve_references(result, ['related_agents']))
   end
 
