@@ -215,12 +215,15 @@ class AgentsController < ApplicationController
       puts "\n\n\n\n\n\n\n\n"
       puts request.to_json
       puts "\n\n\n\n\n\n\n\n"
-      JSONModel::HTTP.post_json(URI(uri), request.to_json)
       begin
-        flash[:success] = I18n.t("agent._frontend.messages.merged")
-
-        resolver = Resolver.new(request.target["ref"])
-        redirect_to(resolver.view_uri)
+        response = JSONModel::HTTP.post_json(URI(uri), request.to_json)
+        if response.message === "OK"
+          flash[:success] = I18n.t("agent._frontend.messages.merged")
+          resolver = Resolver.new(request.target["ref"])
+          redirect_to(resolver.view_uri)
+        else 
+          raise (response.message)
+        end
       rescue ValidationException => e
         flash[:error] = e.errors.to_s
         redirect_to({:action => :show, :id => params[:id]}.merge(extra_params))
