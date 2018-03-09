@@ -35,4 +35,12 @@ $(function() {
     $("form:eq( 4 )").submit();
   });
 
+  $(function() {
+    $('.doe-group').matchHeight();
+    $('.doe-child').matchHeight();
+    $('.names-group').matchHeight();
+    $('.names-child').matchHeight();
+    $('.contact-group').matchHeight();
+    $('.contact-child').matchHeight();
+  });
 });
