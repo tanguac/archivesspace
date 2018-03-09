@@ -9,7 +9,6 @@
 
           <%= render_aspace_partial :partial => "shared/flash_messages" %>
 
-
           <section id="basic_information_left">
             <h3><%= I18n.t("agent._frontend.section.basic_information") %></h3>
 
@@ -20,39 +19,36 @@
             <%= display_audit_info(@agent) %>
           </section>
 
-
-          <% if @agent.dates_of_existence.length > 0 %>
-            <section id="<%= @agent.agent_type %>_dates_of_existence_left">
-              <h3><%= I18n.t("agent._frontend.section.dates_of_existence") %></h3>
-              <div class="accordion details" id="agent_dates_accordion_left">
-                <% @agent.dates_of_existence.each_with_index do | date, index | %>
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                      <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_dates_accordion_left" href="#date_of_existence_<%= index %>_left">
-                        <div class="col-md-1">
-                          <span class="glyphicon"></span>
-                        </div>
-                        <div class="col-md-7">
-                          <%= "#{date['label']}, #{date['date_type']}"  %>
-                        </div>
+          <section id="<%= @agent.agent_type %>_dates_of_existence_left" class="doe-group">
+            <h3><%= I18n.t("agent._frontend.section.dates_of_existence") %></h3>
+            <div id="agent_dates_accordion_left">
+              <% @agent.dates_of_existence.each_with_index do | date, index | %>
+                <div class="panel panel-default doe-child">
+                  <div class="panel-heading">
+                    <div class="row">
+                      <div class="col-md-1">
+                        <span class="glyphicon"></span>
+                      </div>
+                      <div class="col-md-7">
+                        <%= "#{date['label']}, #{date['date_type']}"  %>
                       </div>
                     </div>
-                    <div id="date_of_existence_<%= index %>_left" class="accordion-body collapse">
-                      <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "dates_of_existence", :section_id => "#{@agent.agent_type}_dates_of_existence", :template_erb => "dates/template_merge_target", :template => "existence_date", :heading_text => I18n.t("agent._frontend.section.dates_of_existence"), :heading_size => "h5", :help_topic => "#{@agent.agent_type}_dates_of_existence"} %>
-                    </div>
                   </div>
-                <% end %>
-              </div>
-            </section>
-          <% end %>
+                  <div id="date_of_existence_<%= index %>_left">
+                    <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "dates_of_existence", :section_id => "#{@agent.agent_type}_dates_of_existence", :template_erb => "dates/template_merge_target", :template => "existence_date", :heading_text => I18n.t("agent._frontend.section.dates_of_existence"), :heading_size => "h5", :help_topic => "#{@agent.agent_type}_dates_of_existence"} %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
 
-          <section id="<%= @agent.agent_type %>_names_left">
+          <section id="<%= @agent.agent_type %>_names_left" class="names-group">
             <h3><%= I18n.t("agent_name._plural") %></h3>
             <div class="panel-group details" id="agent_name_accordion_left">
               <% @agent.names.each_with_index do | name, index | %>
-                <div class="panel panel-default">
+                <div class="panel panel-default names-child">
                   <div class="panel-heading">
-                    <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_name_accordion_left" href="#agent_name_<%= index %>_left">
+                    <div class="row">
                       <div class="col-md-1">
                         <span class="glyphicon"></span>
                       </div>
@@ -65,7 +61,7 @@
                       </div>
                     </div>
                   </div>
-                  <div id="agent_name_<%= index %>_left" class="accordion-body collapse">
+                  <div id="agent_name_<%= index %>_left">
                     <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "names", :section_id => "#{@agent.agent_type}_names", :template_erb => "agents/name_forms/#{@agent.agent_type}_merge_target", :template => "name_#{@agent.agent_type.to_s.gsub("agent_","")}", :help_topic => "#{@agent.agent_type}_names"} %>
                   </div>
                 </div>
@@ -73,34 +69,29 @@
             </div>
           </section>
 
-
-          <% if @agent.agent_contacts.length > 0 %>
+          <section id="<%= @agent.agent_type %>_contact_details_left" class="contact-group">
             <%= render_aspace_partial :partial => "agents/contact_details_merge_target" %>
-
-            <section id="<%= @agent.agent_type %>_contact_details_left">
-              <h3><%= I18n.t("agent_contact._plural") %></h3>
-              <div class="accordion details" id="agent_contact_accordion_left">
-                <% @agent.agent_contacts.each_with_index do | contact, index | %>
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                      <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_contact_accordion_left" href="#agent_contact_<%= index %>_left">
-                        <div class="col-md-1">
-                          <span class="glyphicon"></span>
-                        </div>
-                        <div class="col-md-7">
-                          <%= contact['name'] %>
-                        </div>
+            <h3><%= I18n.t("agent_contact._plural") %></h3>
+            <div id="agent_contact_accordion_left">
+              <% @agent.agent_contacts.each_with_index do | contact, index | %>
+                <div class="panel panel-default contact-child">
+                  <div class="panel-heading">
+                    <div class="row">
+                      <div class="col-md-1">
+                        <span class="glyphicon"></span>
+                      </div>
+                      <div class="col-md-7">
+                        <%= contact['name'] %>
                       </div>
                     </div>
-                    <div id="agent_contact_<%= index %>_left" class="accordion-body collapse">
-                      <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "agent_contacts", :section_id => "#{@agent.agent_type}_contact_details", :template_erb => "agents/contact_details_merge_target", :template => "agent_contact", :help_topic => "#{@agent.agent_type}_contact_details"} %>
-                    </div>
                   </div>
-                <% end %>
-              </div>
-            </section>
-
-          <% end %>
+                  <div id="agent_contact_<%= index %>_left">
+                    <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "agent_contacts", :section_id => "#{@agent.agent_type}_contact_details", :template_erb => "agents/contact_details_merge_target", :template => "agent_contact", :help_topic => "#{@agent.agent_type}_contact_details"} %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
 
           <% if @agent.notes.length > 0 %>
             <%= render_aspace_partial :partial => "notes/form_merge_target", :locals => {:form => form, :all_note_types => note_types_for(form['jsonmodel_type']), :section_id => "#{@agent.agent_type}_notes"} %>
@@ -126,7 +117,6 @@
 
           <%= render_aspace_partial :partial => "shared/flash_messages" %>
 
-
           <section id="basic_information_right">
             <h3><%= I18n.t("agent._frontend.section.basic_information") %></h3>
 
@@ -137,39 +127,36 @@
             <%= display_audit_info(@victim) %>
           </section>
 
-
-          <% if @victim.dates_of_existence.length > 0 %>
-            <section id="<%= @victim.agent_type %>_dates_of_existence_right">
-              <h3><%= I18n.t("agent._frontend.section.dates_of_existence") %></h3>
-              <div class="accordion details" id="agent_dates_accordion_right">
-                <% @victim.dates_of_existence.each_with_index do | date, index | %>
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                      <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_dates_accordion_right" href="#date_of_existence_<%= index %>_right">
-                        <div class="col-md-1">
-                          <span class="glyphicon"></span>
-                        </div>
-                        <div class="col-md-7">
-                          <%= "#{date['label']}, #{date['date_type']}"  %>
-                        </div>
+          <section id="<%= @victim.agent_type %>_dates_of_existence_right" class="doe-group">
+            <h3><%= I18n.t("agent._frontend.section.dates_of_existence") %></h3>
+            <div id="agent_dates_accordion_right">
+              <% @victim.dates_of_existence.each_with_index do | date, index | %>
+                <div class="panel panel-default doe-child">
+                  <div class="panel-heading">
+                    <div class="row">
+                      <div class="col-md-1">
+                        <span class="glyphicon"></span>
+                      </div>
+                      <div class="col-md-7">
+                        <%= "#{date['label']}, #{date['date_type']}"  %>
                       </div>
                     </div>
-                    <div id="date_of_existence_<%= index %>_right" class="accordion-body collapse">
-                      <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "dates_of_existence", :section_id => "#{@agent.agent_type}_dates_of_existence", :template_erb => "dates/template_merge", :template => "existence_date", :heading_text => I18n.t("agent._frontend.section.dates_of_existence"), :heading_size => "h5", :help_topic => "#{@agent.agent_type}_dates_of_existence"} %>
-                    </div>
                   </div>
-                <% end %>
-              </div>
-            </section>
-          <% end %>
+                  <div id="date_of_existence_<%= index %>_right" >
+                    <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "dates_of_existence", :section_id => "#{@agent.agent_type}_dates_of_existence", :template_erb => "dates/template_merge", :template => "existence_date", :heading_text => I18n.t("agent._frontend.section.dates_of_existence"), :heading_size => "h5", :help_topic => "#{@agent.agent_type}_dates_of_existence"} %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
 
-          <section id="<%= @victim.agent_type %>_names_right">
+          <section id="<%= @victim.agent_type %>_names_right" class="names-group">
             <h3><%= I18n.t("agent_name._plural") %></h3>
             <div class="panel-group details" id="agent_name_accordion_right">
               <% @victim.names.each_with_index do | name, index | %>
-                <div class="panel panel-default">
+                <div class="panel panel-default names-child">
                   <div class="panel-heading">
-                    <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_name_accordion_right" href="#agent_name_<%= index %>_right">
+                    <div class="row" data-toggle="collapse" data-parent="#agent_name_accordion_right" href="#agent_name_<%= index %>_right">
                       <div class="col-md-1">
                         <span class="glyphicon"></span>
                       </div>
@@ -182,7 +169,7 @@
                       </div>
                     </div>
                   </div>
-                  <div id="agent_name_<%= index %>_right" class="accordion-body collapse">
+                  <div id="agent_name_<%= index %>_right">
                     <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "names", :section_id => "#{@agent.agent_type}_names", :template_erb => "agents/name_forms/#{@agent.agent_type}_merge", :template => "name_#{@agent.agent_type.to_s.gsub("agent_","")}", :help_topic => "#{@agent.agent_type}_names"} %>
                   </div>
                 </div>
@@ -190,34 +177,29 @@
             </div>
           </section>
 
-
-          <% if @victim.agent_contacts.length > 0 %>
+          <section id="<%= @victim.agent_type %>_contact_details_right" class="contact-group">
             <%= render_aspace_partial :partial => "agents/contact_details_merge" %>
-
-            <section id="<%= @victim.agent_type %>_contact_details_right">
-              <h3><%= I18n.t("agent_contact._plural") %></h3>
-              <div class="accordion details" id="agent_contact_accordion_right">
-                <% @victim.agent_contacts.each_with_index do | contact, index | %>
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                      <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_contact_accordion_right" href="#agent_contact_<%= index %>_right">
-                        <div class="col-md-1">
-                          <span class="glyphicon"></span>
-                        </div>
-                        <div class="col-md-7">
-                          <%= contact['name'] %>
-                        </div>
+            <h3><%= I18n.t("agent_contact._plural") %></h3>
+            <div class="accordion details" id="agent_contact_accordion_right">
+              <% @victim.agent_contacts.each_with_index do | contact, index | %>
+                <div class="panel panel-default contact-child">
+                  <div class="panel-heading">
+                    <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_contact_accordion_right" href="#agent_contact_<%= index %>_right">
+                      <div class="col-md-1">
+                        <span class="glyphicon"></span>
+                      </div>
+                      <div class="col-md-7">
+                        <%= contact['name'] %>
                       </div>
                     </div>
-                    <div id="agent_contact_<%= index %>_right" class="accordion-body collapse">
-                      <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "agent_contacts", :section_id => "#{@agent.agent_type}_contact_details", :template_erb => "agents/contact_details_merge", :template => "agent_contact", :help_topic => "#{@agent.agent_type}_contact_details"} %>
-                    </div>
                   </div>
-                <% end %>
-              </div>
-            </section>
-
-          <% end %>
+                  <div id="agent_contact_<%= index %>_right" class="accordion-body collapse">
+                    <%= render_aspace_partial :partial => "shared/subrecord_form_merge", :locals => {:form => form, :name => "agent_contacts", :section_id => "#{@agent.agent_type}_contact_details", :template_erb => "agents/contact_details_merge", :template => "agent_contact", :help_topic => "#{@agent.agent_type}_contact_details"} %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
 
           <% if @victim.notes.length > 0 %>
             <%= render_aspace_partial :partial => "notes/form_merge", :locals => {:form => form, :all_note_types => note_types_for(form['jsonmodel_type']), :section_id => "#{@agent.agent_type}_notes"} %>
