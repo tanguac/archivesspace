@@ -265,7 +265,7 @@ module AspaceFormHelper
       if !(value.is_a? String)
         value = value.to_s
       end
-      
+
 
       if opts.has_key? :controls_class
         opts[:controls_class] << " label-only"
@@ -436,12 +436,14 @@ module AspaceFormHelper
       @forms.tag("input", options.merge(opts), false, false)
     end
 
+
     def req_checkbox(name, opts = {}, default = true, force_checked = false)
       options = {:id => "#{id_for(name)}", :type => "checkbox", :name => path(name), :value => "REQ"}
       options[:checked] = "checked" if force_checked or (obj[name] === true) or (obj[name].is_a? String and obj[name].start_with?("true")) or (obj[name] === "REQ") or (obj[name].nil? and default)
 
       @forms.tag("input", options.merge(opts), false, false)
     end
+
 
     def merge_checkbox(name, opts = {}, default = false, force_checked = false)
       options = {:id => "#{id_for(name)}", :type => "checkbox", :name => path(name), :value => "REPLACE"}
