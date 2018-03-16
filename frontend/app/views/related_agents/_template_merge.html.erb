@@ -34,7 +34,7 @@
       <h4 class="subrecord-form-heading"><%= I18n.t("#{relationship_type}._singular") %><%= form.merge_checkbox('append') %></h4>
       <div class="subrecord-form-container">
         <%= form.hidden_input(:jsonmodel_type, "#{relationship_type}") %>
-        <%= form.label_and_select("relator", form.possible_options_for("relator")) %>
+        <%= form.label_and_readonly("relator") %>
         <% if opts[:readonly] %>
           <div class="token-list <%= form['_resolved']['agent_type'] %>">
             <%= form.label_with_field(:ref, render_token(:object => form,

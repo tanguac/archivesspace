@@ -31,16 +31,22 @@ $(function() {
     });
   });
 
+  /*var elements = document.getElementById('merge-selector-root').getElementsByClassName('drag-handle');
+  console.log(elements[0])
+  while(elements.length > 0){
+    elements[0].classList.remove('drag-handle');
+  }*/
+
   $("button.do-merge").on("click", function() {
     $("form:eq( 4 )").submit();
   });
 
   $(function() {
     $('.doe-group').matchHeight();
-    $('.doe-child').matchHeight();
     $('.names-group').matchHeight();
-    $('.names-child').matchHeight();
     $('.contact-group').matchHeight();
-    $('.contact-child').matchHeight();
+    $('.notes-group').matchHeight();
+    $('.related-group').matchHeight();
+    $('.ed-group').matchHeight();
   });
 });

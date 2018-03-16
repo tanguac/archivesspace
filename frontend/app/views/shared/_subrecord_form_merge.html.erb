@@ -22,19 +22,6 @@
 
 
 <section id="<%= section_id %>" class="<%= section_class %><% if required == :conditionally %> conditionally-required<% elsif required %> required<% end %>" data-subrecord-form="true" data-object-name="<%= singular %>" data-template="<%= js_template_name %>" <% if custom_action_template %>data-custom-action="true"<% end %> data-cardinality="<%= cardinality %>">
-  <% unless hidden %>
-  <<%= heading_size %> class="subrecord-form-heading">
-    <%= wrap_with_tooltip(heading_text, "#{form.i18n_for(name)}_tooltip", "subrecord-form-heading-label") %>
-
-    <% if !form.readonly? %>
-     <%= link_to_help :topic => help_topic %>
-     <% if custom_action_template %>
-       <%= render :partial => custom_action_template %>
-     <% end %>
-    <% end %>
-
-  </<%= heading_size %>>
-  <% end %>
 
   <div class="subrecord-form-container">
     <% if cardinality === :zero_to_one %>
