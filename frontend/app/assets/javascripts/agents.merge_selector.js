@@ -2,7 +2,7 @@
 //= require agents.crud
 //= require agents.show
 //= require merge_dropdown
-//= require subrecord.crud
+//= require subrecord_merge.crud
 //= require notes.crud
 //= require dates.crud
 //= require related_agents.crud
