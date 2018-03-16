@@ -329,6 +329,15 @@ module AspaceFormHelper
       @forms.text_area_tag(path(name), h(value),  options.merge(opts))
     end
 
+    def textarea_ro(name = nil, value = "", opts =  {})
+      return "" if value.blank?
+      opts[:escape] = true unless opts[:escape] == false
+      opts[:base_url] ||= "/"
+      value = clean_mixed_content(value, opts[:base_url]) if opts[:clean] == true
+      value =  @parent.preserve_newlines(value) if opts[:clean] == true
+      value = CGI::escapeHTML(value) if opts[:escape]
+      value.html_safe
+    end
 
     def textfield(name = nil, value = nil, opts =  {})
       value ||= obj[name] if !name.nil?
