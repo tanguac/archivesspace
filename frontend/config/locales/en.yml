@@ -30,6 +30,7 @@ en:
     link_to: Link To
     add_prefix: Add
     merge_replace: Replace
+    merge_add: Add
     merge_confirm_title: Merge into this record?
     merge_subject_confirm_message: "The subject '%{source}' will have the selected records merged into it. All selected records will be deleted and any linked records will be re-linked to this subject."
     merge_agent_confirm_message: "The agent '%{source}' will have the selected records merged into it. All selected records will be deleted and any linked records will be re-linked to this agent."

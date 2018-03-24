@@ -288,7 +288,8 @@
 <% define_template "note_bioghist", jsonmodel_definition(:note_bioghist) do |form| %>
   <div class="subrecord-form-fields" data-type="note_bioghist">
     <h4 class="subrecord-form-heading">
-      <%= I18n.t("note.note_bioghist") %><%= form.merge_checkbox('append') %>
+      <%= I18n.t("note.note_bioghist") %>
+      <label class="append"><%= form.merge_checkbox('append') %><small><%= I18n.t("actions.merge_add") %></small></label>
     </h4>
     <div class="subrecord-form-container">
       <%= form.hidden_input(:jsonmodel_type, "note_bioghist") %>
@@ -658,7 +659,8 @@
 <% define_template "note_agent_rights_statement", jsonmodel_definition(:note_agent_rights_statement) do |form| %>
   <div class="subrecord-form-fields" data-type="note_agent_rights_statement">
     <h4 class="subrecord-form-heading">
-      <%= I18n.t("note.note_agent_rights_statement") %><%= form.merge_checkbox('append') %>
+      <%= I18n.t("note.note_agent_rights_statement") %>
+      <label class="append"><%= form.merge_checkbox('append') %><small><%= I18n.t("actions.merge_add") %></small></label>
     </h4>
     <div class="subrecord-form-container">
       <%= form.hidden_input(:jsonmodel_type, "note_agent_rights_statement") %>
