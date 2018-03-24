@@ -31,12 +31,6 @@ $(function() {
     });
   });
 
-  /*var elements = document.getElementById('merge-selector-root').getElementsByClassName('drag-handle');
-  console.log(elements[0])
-  while(elements.length > 0){
-    elements[0].classList.remove('drag-handle');
-  }*/
-
   $("button.do-merge").on("click", function() {
     $("form:eq( 4 )").submit();
   });
@@ -48,5 +42,6 @@ $(function() {
     $('.notes-group').matchHeight();
     $('.related-group').matchHeight();
     $('.ed-group').matchHeight();
+    $('.drag-handle').removeClass('drag-handle');
   });
 });
