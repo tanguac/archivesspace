@@ -53,13 +53,11 @@ class ArchivesSpaceService < Sinatra::Base
 
     selections = parse_selections(params[:merge_request_detail].selections)
 
-
     if (victims.map {|r| r[:type]} + [target[:type]]).any? {|type| !AgentManager.known_agent_type?(type)}
       raise BadParamsException.new(:merge_request_detail => ["Agent merge request can only merge agent records"])
     end
 
     agent_model = AgentManager.model_for(target[:type])
-    #agent_model = AgentManager.model_for(victims[0][:type])
 
     target = agent_model.get_or_die(target[:id]) 
 
@@ -67,46 +65,21 @@ class ArchivesSpaceService < Sinatra::Base
     if params[:dry_run]
       target = agent_model.to_jsonmodel(target)
       victim = agent_model.to_jsonmodel(victim)
-      new_target = merge_details(target, victim, selections)
+      new_target = merge_details(target, victim, selections, true)
       result = new_target
     else
-      puts "\n\n\n\n\n\n"
-      puts "hellloooo I made it!!!!!!!"
-      puts "\n\n\n\n\n\n"
       target_json = agent_model.to_jsonmodel(target)
       victim_json = agent_model.to_jsonmodel(victim)
-      new_target = merge_details(target_json, victim_json, selections)
+      new_target = merge_details(target_json, victim_json, selections, false)
       target.assimilate((victims.map {|v|
                                        AgentManager.model_for(v[:type]).get_or_die(v[:id])
                                      }))
-      puts "\n\n\n\n\n\n"
-      puts new_target
-      puts "\n\n\n\n\n\n"
-
-      target.update_from_json(new_target)
-      puts "\n\n\n\n\n\n"
-      puts target
-      puts "\n\n\n\n\n\n"
+      if selections != {}
+        target.update_from_json(new_target)
+      end
       json_response(:status => "OK")
     end
-    #result.test()
-    '''result = result.auto_generate(:property => :sort_name,
-                :generator => proc  { |json|
-                  result = ""
 
-                  result << "#{json["primary_name"]}" if json["primary_name"]
-                  result << ". #{json["subordinate_name_1"]}" if json["subordinate_name_1"]
-                  result << ". #{json["subordinate_name_2"]}" if json["subordinate_name_2"]
-
-                  grouped = [json["number"], json["dates"]].reject{|v| v.nil?}
-                  result << " (#{grouped.join(" : ")})" if not grouped.empty?
-
-                  result << " (#{json["qualifier"]})" if json["qualifier"]
-
-                  result.length > 255 ? result[0..254] : result
-                },
-                :only_if => proc { |json| json["sort_name_auto_generate"] }
-    )'''
     json_response(resolve_references(result, ['related_agents']))
   end
 
@@ -207,10 +180,7 @@ class ArchivesSpaceService < Sinatra::Base
     return all_values
   end 
 
-  def merge_details(target, victim, selections)
-    puts "\n\n\n\n\n\n\n"
-    puts selections
-    puts "\n\n\n\n\n\n\n"
+  def merge_details(target, victim, selections, dry_run)
     selections.each_key do |key|
       path = key.split(".")
       path_fix = []
@@ -248,14 +218,16 @@ class ArchivesSpaceService < Sinatra::Base
               end
             end
         end
-      elsif path_fix[0] === 'related_agents'
-        target['related_agents'].push(victim['related_agents'][path_fix[1]])
       elsif path_fix[0] === 'external_documents'
         target['external_documents'].push(victim['external_documents'][path_fix[1]])
       elsif path_fix[0] === 'notes'
         target['notes'].push(victim['notes'][path_fix[1]])
       end
+    
     target['title'] = target['names'][0]['sort_name']
+    end
+    if dry_run == true
+      target['related_agents'] = (target['related_agents'] + victim['related_agents']).uniq
     end
     target
   end
