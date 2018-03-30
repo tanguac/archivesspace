@@ -3,7 +3,7 @@
 //= require agents.show
 //= require merge_dropdown
 //= require subrecord_merge.crud
-//= require notes.crud
+//= require notes_merge.crud
 //= require dates.crud
 //= require related_agents.crud
 //= require rights_statements.crud
@@ -14,11 +14,7 @@
 $(function() {
   console.log($(this))
   $("button.preview-merge").on("click", function() {
-    /*var $form = $(this).closest("form");*/
     var $form = $( "form:eq( 4 )" )
-    console.log($form)
-    console.log($form.attr("action") + "?dry_run=true")
-    /*console.log(document.forms[4].attr("action") + "?dry_run=true")*/
     AS.openCustomModal("mergePreviewModal", $(this).text(), "<div class='alert alert-info'>Loading...</div>", {}, this);
     $.ajax({
       url: $form.attr("action") + "?dry_run=true",
