@@ -187,10 +187,14 @@ class AgentsController < ApplicationController
 
   def merge_selector
     @agent = JSONModel(@agent_type).find(params[:id], find_opts)
-    victim_id = params[:refs].split('/')[-1]
-    @victim = JSONModel(@agent_type).find(victim_id, find_opts)
-    #render :text => params[:refs]
-    render '_merge_selector'
+    if params[:refs].is_a?(Array)
+      flash[:error] = I18n.t("errors.too_many_victims")
+      redirect_to({:action => :show, :id => params[:id]})
+    elsif params[:refs].is_a?(String)
+      victim_id = params[:refs].split('/')[-1]
+      @victim = JSONModel(@agent_type).find(victim_id, find_opts)
+      render '_merge_selector'
+    end
   end
 
   def merge_detail
