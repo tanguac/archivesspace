@@ -188,12 +188,19 @@ class AgentsController < ApplicationController
   def merge_selector
     @agent = JSONModel(@agent_type).find(params[:id], find_opts)
     if params[:refs].is_a?(Array)
-      flash[:error] = I18n.t("errors.too_many_victims")
+      flash[:error] = I18n.t("errors.merge_too_many_victims")
       redirect_to({:action => :show, :id => params[:id]})
     elsif params[:refs].is_a?(String)
-      victim_id = params[:refs].split('/')[-1]
-      @victim = JSONModel(@agent_type).find(victim_id, find_opts)
-      render '_merge_selector'
+      victim_details = JSONModel.parse_reference(params[:refs])
+      @victim_type = victim_details[:type].to_sym
+      if @victim_type != @agent_type
+        flash[:error] = I18n.t("errors.merge_different_types")
+        redirect_to({:action => :show, :id => params[:id]})
+      else
+        victim_id = victim_details[:id]
+        @victim = JSONModel(@victim_type).find(victim_id, find_opts)
+        render '_merge_selector'
+      end
     end
   end
 
@@ -206,19 +213,12 @@ class AgentsController < ApplicationController
     uri = "#{JSONModel::HTTP.backend_url}/merge_requests/agent_detail"
     if params["dry_run"]
       uri += "?dry_run=true"
-      puts "\n\n\n\n\n\n\n\n"
-      puts request
-      puts "\n\n\n\n\n\n\n\n"
       response = JSONModel::HTTP.post_json(URI(uri), request.to_json)
 
-      #@preview = JSONModel(@agent_type).from_json(response)
       merge_response = ASUtils.json_parse(response.body)
       @agent = JSONModel(@agent_type).from_hash(merge_response, find_opts)
       render_aspace_partial :partial => "agents/merge_preview", :locals => {:object => @agent}
     else
-      puts "\n\n\n\n\n\n\n\n"
-      puts request.to_json
-      puts "\n\n\n\n\n\n\n\n"
       begin
         response = JSONModel::HTTP.post_json(URI(uri), request.to_json)
         if response.message === "OK"
