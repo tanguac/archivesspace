@@ -122,12 +122,8 @@ $(function() {
         return $(".subrecord-form-list:first > li", $this).length;
       };
       
-      tooManyRecords = AS.initTooManySubRecords($this, numberOfSubRecords(), init );
-      
-      if ( tooManyRecords === false ) {
-        $this.addClass("initialised");
-        init(function() { $(document).trigger("loadedrecordsubforms.aspace", $this);  });
-      } 
+      $this.addClass("initialised");
+      init(function() { $(document).trigger("loadedrecordsubforms.aspace", $this);  });
     
     })
   };
