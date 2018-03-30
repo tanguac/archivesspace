@@ -28,32 +28,30 @@
 
         <section id="<%= @agent.agent_type %>_names">
           <h3><%= I18n.t("agent_name._plural") %></h3>
-          <div class="panel-group details" id="agent_name_accordion">
-            <% @agent.names.each_with_index do | name, index | %>
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_name_accordion" href="#agent_name_<%= index %>">
-                    <div class="col-md-1">
-                      <span class="glyphicon"></span>
-                    </div>
-                    <div class="col-md-6">
-                      <%= name['sort_name'] %>
-                    </div>
-                    <div class="col-md-4">
-                      <% if name['authorized'] %><span class="badge"><%= I18n.t("name_person.authorized") %></span><% end %>
-                      <% if name['is_display_name'] %><span class="badge badge-info"><%= I18n.t("name_person.is_display_name") %></span><% end %>
-                    </div>
+          <% @agent.names.each_with_index do | name, index | %>
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <div class="row">
+                  <div class="col-md-1">
+                    <span class="glyphicon"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <%= name['sort_name'] %>
+                  </div>
+                  <div class="col-md-4">
+                    <% if name['authorized'] %><span class="badge"><%= I18n.t("name_person.authorized") %></span><% end %>
+                    <% if name['is_display_name'] %><span class="badge badge-info"><%= I18n.t("name_person.is_display_name") %></span><% end %>
                   </div>
                 </div>
-                <div id="agent_name_<%= index %>" class="accordion-body collapse">
-                  <%= read_only_view(name.to_hash) %>
-                  <% if name['use_dates'].length > 0 %>
-                    <%= render_aspace_partial :partial => "dates/show", :locals => { :dates => name['use_dates'], :section_id => "name_use_dates", :section_title => I18n.t("agent_name.use_dates"), :context => readonly } %>
-                  <% end %>
-                </div>
               </div>
-            <% end %>
-          </div>
+              <div id="agent_name_<%= index %>">
+                <%= read_only_view(name.to_hash) %>
+                <% if name['use_dates'].length > 0 %>
+                  <%= render_aspace_partial :partial => "dates/show", :locals => { :dates => name['use_dates'], :section_id => "name_use_dates", :section_title => I18n.t("agent_name.use_dates"), :context => readonly } %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         </section>
 
 
@@ -62,27 +60,25 @@
 
           <section id="<%= @agent.agent_type %>_contact_details">
             <h3><%= I18n.t("agent_contact._plural") %></h3>
-            <div class="accordion details" id="agent_contact_accordion">
-              <% @agent.agent_contacts.each_with_index do | contact, index | %>
-                <div class="panel panel-default">
-                  <div class="panel-heading">
-                    <div class="row accordion-toggle collapsed" data-toggle="collapse" data-parent="#agent_contact_accordion" href="#agent_contact_<%= index %>">
-                      <div class="col-md-1">
-                        <span class="glyphicon"></span>
-                      </div>
-                      <div class="col-md-7">
-                        <%= contact['name'] %>
-                      </div>
+            <% @agent.agent_contacts.each_with_index do | contact, index | %>
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <div class="row">
+                    <div class="col-md-1">
+                      <span class="glyphicon"></span>
+                    </div>
+                    <div class="col-md-7">
+                      <%= contact['name'] %>
                     </div>
                   </div>
-                  <div id="agent_contact_<%= index %>" class="accordion-body collapse">
-                    <%= readonly_context :agent_contact, contact do |readonly_contact| %>
-                      <%= readonly_contact.emit_template("agent_contact") %>
-                    <% end %>
-                  </div>
                 </div>
-              <% end %>
-            </div>
+                <div id="agent_contact_<%= index %>">
+                  <%= readonly_context :agent_contact, contact do |readonly_contact| %>
+                    <%= readonly_contact.emit_template("agent_contact") %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
           </section>
 
         <% end %>
