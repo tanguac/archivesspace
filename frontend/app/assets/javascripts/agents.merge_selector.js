@@ -32,6 +32,8 @@ $(function() {
   });
 
   $(function() {
+    $('.title-group').matchHeight();
+    $('.basic-info-group').matchHeight();
     $('.doe-group').matchHeight();
     $('.names-group').matchHeight();
     $('.contact-group').matchHeight();

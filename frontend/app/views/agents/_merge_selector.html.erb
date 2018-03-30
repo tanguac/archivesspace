@@ -2,14 +2,15 @@
 
 <div id="merge-selector-root" class="row">
   <div class="col-md-6">
+    <h2><%= I18n.t("agent._frontend.section.target_record") %></h2>
     <div class="record-pane">
       <%= form_for @agent, :as => "agent", :url => {:action => :merge_detail}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
         <%= form_context :agent, @agent do |form| %>
-          <h2><%= @agent.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
+          <h2 class="title-group"><%= @agent.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
 
           <%= render_aspace_partial :partial => "shared/flash_messages" %>
 
-          <section id="basic_information_left">
+          <section id="basic_information_left" class="basic-info-group">
             <h3><%= I18n.t("agent._frontend.section.basic_information") %></h3>
 
             <div class="form-group">
@@ -89,15 +90,16 @@
     </div>
   </div>
   <div class="col-md-6">
+    <h2><%= I18n.t("agent._frontend.section.victim_record") %></h2>
     <div class="record-pane">
       <%= form_for @victim, :as => "agent", :url => {:action => :merge_detail}, :html => {:class => 'form-horizontal aspace-record-form', :id => "agent_form"} do |f| %>
         <%= form_context :agent, @victim do |form| %>
           <input type='hidden' name='victim_uri' value='<%= @victim.uri %>' />
-          <h2><%= @victim.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
+          <h2 class="title-group"><%= @victim.title %>  <span class="label label-info"><%= I18n.t("agent._singular") %></span></h2>
 
           <%= render_aspace_partial :partial => "shared/flash_messages" %>
 
-          <section id="basic_information_right">
+          <section id="basic_information_right" class="basic-info-group">
             <h3><%= I18n.t("agent._frontend.section.basic_information") %></h3>
 
             <div class="form-group">

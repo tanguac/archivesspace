@@ -460,6 +460,8 @@ en:
         contacts: Contact Details
         search_embedded: Linked Records
         linked_via_rights_statement: Linked Records via Rights Statement
+        target_record: This record will be updated 
+        victim_record: This record will be deleted
       action:
         create: Create Agent
         preview: Merge Preview
