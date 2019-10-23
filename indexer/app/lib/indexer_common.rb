@@ -14,7 +14,7 @@ require 'record_inheritance'
 require_relative 'index_batch'
 require_relative 'indexer_common_config'
 require_relative 'indexer_timing'
-
+require_relative 'fake_solr_timeout_response'
 
 class IndexerCommon
 
@@ -121,7 +121,7 @@ class IndexerCommon
   def self.extract_string_values(doc)
     text = ""
     doc.each do |key, val|
-      if %w(created_by last_modified_by system_mtime user_mtime json types create_time date_type jsonmodel_type publish extent_type system_generated suppressed source rules name_order).include?(key)
+      if %w(created_by last_modified_by system_mtime user_mtime json types create_time date_type jsonmodel_type publish extent_type language script system_generated suppressed source rules name_order).include?(key)
       elsif key =~ /_enum_s$/
       elsif val.is_a?(String)
         text << "#{val} "
@@ -255,7 +255,7 @@ class IndexerCommon
   end
 
   # TODO: We should fix this to read from the JSON schemas
-  HARDCODED_ENUM_FIELDS = ["relator", "type", "role", "source", "rules", "acquisition_type", "resource_type", "processing_priority", "processing_status", "era", "calendar", "digital_object_type", "level", "processing_total_extent_type", "extent_type", "event_type", "type_1", "type_2", "type_3", "salutation", "outcome", "finding_aid_description_rules", "finding_aid_status", "instance_type", "use_statement", "checksum_method", "language", "date_type", "label", "certainty", "scope", "portion", "xlink_actuate_attribute", "xlink_show_attribute", "file_format_name", "temporary", "name_order", "country", "jurisdiction", "rights_type", "ip_status", "term_type", "enum_1", "enum_2", "enum_3", "enum_4", "relator_type", "job_type"]
+  HARDCODED_ENUM_FIELDS = ["relator", "type", "role", "source", "rules", "acquisition_type", "resource_type", "processing_priority", "processing_status", "era", "calendar", "digital_object_type", "level", "processing_total_extent_type", "extent_type", "language", "script", "event_type", "type_1", "type_2", "type_3", "salutation", "outcome", "finding_aid_description_rules", "finding_aid_status", "instance_type", "use_statement", "checksum_method", "date_type", "label", "certainty", "scope", "portion", "xlink_actuate_attribute", "xlink_show_attribute", "file_format_name", "temporary", "name_order", "country", "jurisdiction", "rights_type", "ip_status", "term_type", "enum_1", "enum_2", "enum_3", "enum_4", "relator_type", "job_type"]
 
   def configure_doc_rules
 
@@ -291,6 +291,8 @@ class IndexerCommon
         doc['title'] = record['record']['display_string']
         doc['component_id'] = record['record']['component_id']
         doc['ref_id'] = record['record']['ref_id']
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
       end
     }
 
@@ -306,12 +308,20 @@ class IndexerCommon
 
     add_document_prepare_hook {|doc, record|
       if doc['primary_type'] == 'accession'
-        doc['accession_date_year'] = Date.parse(record['record']['accession_date']).year
+        date = record['record']['accession_date']
+        if date == '9999-12-31'
+          unknown = I18n.t('accession.accession_date_unknown')
+          doc['accession_date'] = unknown
+          doc['fullrecord'] ||= ''
+          doc['fullrecord'] << unknown + ' '
+        else
+          doc['accession_date'] = date
+        end
+        doc['accession_date_year'] = Date.parse(date).year
         doc['identifier'] = (0...4).map {|i| record['record']["id_#{i}"]}.compact.join("-")
         doc['title'] = record['record']['display_string']
 
         doc['acquisition_type'] = record['record']['acquisition_type']
-        doc['accession_date'] = record['record']['accession_date']
         doc['resource_type'] = record['record']['resource_type']
         doc['restrictions_apply'] = record['record']['restrictions_apply']
         doc['access_restrictions'] = record['record']['access_restrictions']
@@ -319,6 +329,8 @@ class IndexerCommon
         doc['related_resource_uris'] = record['record']['related_resources'].
                                           collect{|resource| resource["ref"]}.
                                           compact.uniq
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
       end
     }
 
@@ -327,6 +339,8 @@ class IndexerCommon
         doc['source'] = record['record']['source']
         doc['first_term_type'] = record['record']['terms'][0]['term_type']
         doc['publish'] = record['record']['publish'] && record['record']['is_linked_to_published_record']
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
       end
     }
 
@@ -342,6 +356,8 @@ class IndexerCommon
         doc['repository'] = doc["id"]
         doc['title'] = record['record']['repo_code']
         doc['repo_sort'] = record['record']['display_string']
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
       end
     }
 
@@ -361,6 +377,8 @@ class IndexerCommon
       if doc['primary_type'] == 'digital_object_component'
         doc['digital_object'] = record['record']['digital_object']['ref']
         doc['title'] = record['record']['display_string']
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
       end
     }
 
@@ -371,13 +389,14 @@ class IndexerCommon
         doc['identifier'] = (0...4).map {|i| record['record']["id_#{i}"]}.compact.join("-")
         doc['resource_type'] = record['record']['resource_type']
         doc['level'] = record['record']['level']
-        doc['language'] = record['record']['language']
         doc['restrictions'] = record['record']['restrictions']
         doc['ead_id'] = record['record']['ead_id']
         doc['finding_aid_status'] = record['record']['finding_aid_status']
         doc['related_accession_uris'] = record['record']['related_accessions'].
                                            collect{|accession| accession["ref"]}.
                                            compact.uniq
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
       end
 
       if doc['primary_type'] == 'digital_object'
@@ -386,6 +405,8 @@ class IndexerCommon
         doc['digital_object_id'] = record['record']['digital_object_id']
         doc['level'] = record['record']['level']
         doc['restrictions'] = record['record']['restrictions']
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
 
         doc['linked_instance_uris'] = record['record']['linked_instances'].
                                          collect{|instance| instance["ref"]}.
@@ -424,6 +445,8 @@ class IndexerCommon
         doc['linked_agent_roles'] = record['record']['linked_agent_roles']
 
         doc['related_agent_uris'] = ASUtils.wrap(record['record']['related_agents']).collect{|ra| ra['ref']}
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
 
         if record['record']['is_user']
           doc['is_user'] = true
@@ -447,9 +470,18 @@ class IndexerCommon
       if ['classification', 'classification_term'].include?(doc['primary_type'])
         doc['classification_path'] = ASUtils.to_json(record['record']['path_from_root'])
         doc['agent_uris'] = ASUtils.wrap(record['record']['creator']).collect{|agent| agent['ref']}
+        doc['published_agent_uris'] = []
+        if !record.dig(:record, :creator, :_resolved).nil?
+           if record['record']['creator']['_resolved']['publish'] && !record['record']['creator']['ref'].nil?
+             doc['published_agent_uris'] << record['record']['creator']['ref']
+           end
+        end
+        doc['agents'] = ASUtils.wrap(record['record']['creator']).collect{|link| link['_resolved']['display_name']['sort_name']}
         doc['identifier_sort'] = IndexerCommon.generate_sort_string_for_identifier(record['record']['identifier'])
         doc['repo_sort'] = record['record']['repository']['_resolved']['display_string']
         doc['has_classification_terms'] = record['record']['has_classification_terms']
+        doc['slug'] = record['record']['slug']
+        doc['is_slug_auto'] = record['record']['is_slug_auto']
       end
     }
 
@@ -591,7 +623,8 @@ class IndexerCommon
 
 
     add_document_prepare_hook { |doc, record|
-      doc['fullrecord'] = IndexerCommon.build_fullrecord(record)
+      doc['fullrecord'] ||= ''
+      doc['fullrecord'] << IndexerCommon.build_fullrecord(record)
     }
 
 
@@ -749,6 +782,8 @@ class IndexerCommon
     ASHTTP.start_uri(url, opts) do |http|
       http.request(req)
     end
+  rescue Timeout::Error
+    FakeSolrTimeoutResponse.new(req)
   end
 
 
@@ -819,10 +854,12 @@ class IndexerCommon
     req.body = delete_request.to_json
 
     response = do_http_request(solr_url, req)
-    Log.info "Deleted #{records.length} documents: #{response}"
 
-    if response.code != '200'
-      raise "Error when deleting records: #{response.body}"
+
+    if response.code == '200'
+      Log.info "Deleted #{records.length} documents: #{response}"
+    else
+      Log.error "SolrIndexerError when deleting records: #{response.body}"
     end
   end
 
@@ -976,7 +1013,7 @@ class IndexerCommon
         batch.destroy
 
         if response.code != '200'
-          raise "Error when indexing records: #{response.body}"
+          Log.error "SolrIndexerError when indexing records: #{response.body}"
         end
       end
     end
@@ -994,7 +1031,7 @@ class IndexerCommon
       if response.body =~ /exceeded limit of maxWarmingSearchers/
         Log.info "INFO: #{response.body}"
       else
-        raise "Error when committing: #{response.body}"
+        Log.error "SolrIndexerError when committing: #{response.body}"
       end
     end
   end

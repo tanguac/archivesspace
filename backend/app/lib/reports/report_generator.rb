@@ -1,5 +1,6 @@
 require 'java'
 require 'csv'
+require_relative 'rtf_generator'
 require_relative 'csv_report_expander'
 
 #java_import org.xhtmlrenderer.pdf.ITextRenderer
@@ -23,6 +24,8 @@ class ReportGenerator
       generate_html(file)
     when 'pdf'
       generate_pdf(file)
+    when 'rtf'
+      generate_rtf(file)
     else
       generate_csv(file)
     end
@@ -55,6 +58,11 @@ class ReportGenerator
 
     xml.unlink
     output_stream.close
+  end
+
+  def generate_rtf(file)
+    rtf = RtfGenerator.new(self).generate
+    file.write(rtf.to_rtf)
   end
 
   def generate_csv(file)
@@ -93,24 +101,22 @@ class ReportGenerator
     end
   end
 
+  INVALID_CHARS = {
+    '"' => '&quot;',
+    '&' => '&amp;',
+    "'" => '&apos;',
+    '<' => '&lt;',
+    '>' => '&gt;'
+  }
+
   def xml_clean!(data)
-    data_array = data.is_a?(Array) ? data : [data]
-    invalid_chars = {}
-    invalid_chars['"'] = '&quot;'
-    invalid_chars['&'] = '&amp;'
-    invalid_chars["'"] = '&apos;'
-    invalid_chars['<'] = '&lt;'
-    invalid_chars['>'] = '&gt;'
-    data_array.each do |item|
-      next unless item.is_a?(Hash)
-      item.each do |_key, value|
-        if value.is_a?(Array)
-          xml_clean!(value)
-        elsif value
-          value.to_s.gsub!(/[#{invalid_chars.keys.join('')}]/) do |ch|
-            invalid_chars[ch]
-          end
-        end
+    if data.is_a?(Array)
+      data.each {|item| xml_clean!(item)}
+    elsif data.is_a?(Hash)
+      data.each {|_key, value| xml_clean!(value)}
+    elsif data.is_a?(String)
+      data.gsub!(/[#{INVALID_CHARS.keys.join('')}]/) do |ch|
+        INVALID_CHARS[ch]
       end
     end
   end
@@ -148,6 +154,14 @@ class ReportGenerator
     sub_report_code_stack.pop
     sub_report_data_stack.pop
     render
+  end
+
+  def rtf_subreport(value)
+    sub_report_code_stack.push(value.pop)
+    sub_report_data_stack.push(value)
+    yield(value)
+    sub_report_code_stack.pop
+    sub_report_data_stack.pop
   end
 
   def template_path(file)

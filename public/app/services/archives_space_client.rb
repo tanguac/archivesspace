@@ -1,6 +1,8 @@
 require 'net/http'
 require 'uri'
 require 'thread'
+require 'asutils'
+
 
 # This class provides access to the basic ArchivesSpace API endpoints.  A single
 # instance will be shared between all running request threads, so it should be
@@ -39,14 +41,14 @@ class ArchivesSpaceClient
     results = search_all_results("primary_type:repository")
 
     results.map { |result|
-      Repository.from_json(JSON.parse(result['json']))
+      Repository.from_json(ASUtils.json_parse(result['json']))
     }
       .each { |r| repos[r['uri']] = r }
     repos
   end
 
   def search(query, page = 1, search_opts = {})
-    search_opts = set_search_opts(search_opts)
+    search_opts = DEFAULT_SEARCH_OPTS.merge(search_opts)
     url = build_url('/search', search_opts.merge(:q => query, :page => page))
     results = do_search(url)
 
@@ -55,7 +57,7 @@ class ArchivesSpaceClient
 
   # handles multi-line searching
   def advanced_search(base, page = 1, search_opts = {})
-    search_opts = set_search_opts(search_opts)
+    search_opts = DEFAULT_SEARCH_OPTS.merge(search_opts)
     url = build_url(base,  search_opts.merge(:page => page))
     results = do_search(url)
 
@@ -63,7 +65,7 @@ class ArchivesSpaceClient
   end
   # calls the '/search/records' endpoint
   def search_records(record_list, search_opts = {}, full_notes = false)
-    search_opts = set_search_opts(search_opts)
+    search_opts = DEFAULT_SEARCH_OPTS.merge(search_opts)
 
     url = build_url('/search/records', search_opts.merge("uri[]" => record_list))
     results = do_search(url)
@@ -75,7 +77,7 @@ class ArchivesSpaceClient
   end
 
   def get_raw_record(uri, search_opts = {})
-    search_opts = set_search_opts(search_opts)
+    search_opts = DEFAULT_SEARCH_OPTS.merge(search_opts)
     url = build_url('/search/records', search_opts.merge("uri[]" => ASUtils.wrap(uri)))
     results = do_search(url)
 
@@ -93,7 +95,7 @@ class ArchivesSpaceClient
   end
 
   def search_repository( base, repo_id, page = 1, search_opts = {})
-    search_opts = set_search_opts(search_opts)
+    search_opts = DEFAULT_SEARCH_OPTS.merge(search_opts)
 
     url = build_url(base,search_opts.merge(:page => page))
     results = do_search(url)
@@ -106,7 +108,7 @@ class ArchivesSpaceClient
     url =  build_url('/search/published_tree', {:node_uri => node_uri})
     begin
       results = do_search(url, true)
-      tree = JSON.parse(results['tree_json'])
+      tree = ASUtils.json_parse(results['tree_json'])
     rescue  RequestFailedException => error
       Rails.logger.error("Tree search failed on #{node_uri} : #{error}")
     end
@@ -121,7 +123,7 @@ class ArchivesSpaceClient
   end
 
   def get_repos_sublist(uri, type, search_opts = {})
-    search_opts = set_search_opts(search_opts)
+    search_opts = DEFAULT_SEARCH_OPTS.merge(search_opts)
     search_opts = search_opts.merge({"q" => "(used_within_published_repository:\"#{uri}\" AND publish:true AND types:pui_#{type})"})
     url = build_url("/search", search_opts)
     results = do_search(url)
@@ -147,7 +149,7 @@ class ArchivesSpaceClient
       Rails.logger.debug("Code: #{response.code}")
       raise RequestFailedException.new("#{response.code}: #{response.body}")
     end
-    results = JSON.parse(response.body)
+    results = ASUtils.json_parse(response.body)
     results
   end
 
@@ -177,7 +179,7 @@ class ArchivesSpaceClient
           raise LoginFailedException.new("#{response.code}: #{response.body}")
         end
 
-        @session = JSON(response.body).fetch('session')
+        @session = ASUtils.json_parse(response.body).fetch('session')
       rescue
         raise LoginFailedException.new($!.message)
       end
@@ -265,20 +267,4 @@ class ArchivesSpaceClient
     end
     filter_str
   end
-
-  # Include configurable solr parameters from AppConfig in the search options hash
-  def set_search_opts(search_opts = {})
-    search_opts = DEFAULT_SEARCH_OPTS.merge(search_opts)
-    if AppConfig[:solr_params].any?
-      AppConfig[:solr_params].each do |param, value|
-        if value.respond_to? :call
-          search_opts[param.to_sym] = self.instance_eval(&value)
-        else
-          search_opts[param.to_sym] = value
-        end
-      end
-    end
-    search_opts
-  end
-
 end

@@ -33,6 +33,7 @@ fr:
 
   actions:
     search: Chercher
+    search_header: Rechercher dans les archives
     search_within: Chercher dans les résultats
     search_in: "Rechercher %{type}"
     new_search: Nouvelle recherche
@@ -60,6 +61,7 @@ fr:
   page_actions: Page Actions
 
   request:
+    email_header: Merci pour votre requête
     required: obligatoire
     user_name: Votre nom
     user_email: Votre adresse email
@@ -117,6 +119,7 @@ fr:
     title_contain: "l'<strong>intitulé</strong> contient  <span class='searchterm'>%{kw}</span>"
     notes_contain: "la <strong>note</strong> contient  <span class='searchterm'>%{kw}</span>"
     creators_text_contain: "le <strong>producteur</strong> contient <span class='searchterm'>%{kw}</span>"
+    subjects_text_contain: "le <strong>sujet</strong> contient <span class='searchterm'>%{kw}</span>"
     identifier_contain: "L'<strong>identifiant</strong> contient <span class='searchterm'>%{kw}</span>"
     four_part_id_contain: "L'<strong>identifiant</strong> contient <span class='searchterm'>%{kw}</span>"
     in_repository: " dans <strong>%{name}</strong>"
@@ -326,6 +329,7 @@ fr:
       header:
        dates: Dates
        lang: Langue
+       script: Scénario
        physdesc: Description physique
        storage: Information de conditionnement
        access: Conditions d'accès
@@ -357,7 +361,8 @@ fr:
       identifier: Identifiant
       extent: Volume
       dates: Dates
-      lang: Langue
+      lang: Langue des matériaux
+      script: Scénario
       digital_object: Objet numérique
       physdesc: Description physique
       storage: Info conditionnement
@@ -379,6 +384,8 @@ fr:
         description_rules: Règles de description
         identifier: Identifiant
         language: Langue de description
+        script: Script de description
+        language_note: Langue de la note de description
         sponsor: Sponsor
         edition_statement: Mention d'édition
         series_statement: Mention de série
@@ -1089,6 +1096,7 @@ fr:
       chv: Tchouvache
       chy: Cheyenne
       cmc: Langues chames
+      cnr: Monténégrin
       cop: Copte
       cor: Cornique
       cos: Corse
@@ -1351,7 +1359,6 @@ fr:
       pra: Langues prâkrit
       pro: "Provençal ancien, occitan ancien (jusqu'à 1500)"
       pus: Pachto; Pashtou
-      qaa-qtz: "Reservé pour utilisation locale"
       que: Quéchua
       raj: Rajasthani
       rap: Rapanui
@@ -1479,6 +1486,7 @@ fr:
       zap: Zapotèque
       zbl: Smboles Bliss, Bliss
       zen: Zénaga
+      zgh: Amazighe Standard Marocain
       zha: Zhuang; Chuang
       znd: Langues zandé
       zul: Zoulou
@@ -1725,7 +1733,7 @@ fr:
       NU: Niue
       NF: Iles Norfolk
       MP: Northern Mariana Islands
-      NO: Norvège
+      "NO": Norvège
       OM: Oman
       PK: Pakistan
       PW: Palaos
@@ -1912,12 +1920,6 @@ fr:
       novalue: Aucune valeur définie
     user_defined_enum_4:
       novalue: Aucune valeur définie
-    job_type:
-      print_to_pdf_job: Imprimer en PDF
-      import_job: Importer données
-      find_and_replace_job: Rechercher et remplacer en masse (Bêta)
-      report_job: Rapports
-      container_conversion_job: Rapports
     dimension_units:
       inches: Inches
       feet: Feet

@@ -1,4 +1,4 @@
-require_relative 'spec_helper'
+require 'spec_helper'
 require_relative '../app/lib/periodic_indexer'
 
 describe "periodic indexer" do
@@ -95,7 +95,7 @@ describe "periodic indexer" do
       indexer.prepare_docs([ao])
 
       doc = indexer.records[0]
-      expect(doc.fetch('publish')).to eq(false)
+      expect(doc.fetch('publish')).to be_falsey
     end
   end
 end

@@ -1,6 +1,6 @@
 class LargeTreeDocIndexer
 
-  attr_reader :batch
+  attr_reader :batch, :deletes
 
   def initialize(batch)
     # We'll track the nodes we find as we need to index their path from root
@@ -8,6 +8,7 @@ class LargeTreeDocIndexer
     @node_uris = []
 
     @batch = batch
+    @deletes = []
   end
 
   def add_largetree_docs(root_record_uris)
@@ -38,7 +39,7 @@ class LargeTreeDocIndexer
                                       :parent_node => parent_uri,
                                       :published_only => true)
 
-
+      
       batch << {
         'id' => "#{root_record_uri}/tree/waypoint_#{parent_uri}_#{waypoint_number}",
         'pui_parent_id' => (parent_uri || root_record_uri),
@@ -77,6 +78,11 @@ class LargeTreeDocIndexer
 
       # Finally, walk the node's waypoints and index those too.
       add_waypoints(json, root_record_uri, json.fetch('uri'))
+    else
+      # Fixing #ANW-731
+      # This node has no published children but it might have previously
+      # so we need to remember its node doc so our caller can delete it
+      @deletes.push("#{root_record_uri}/tree/node_#{record_uri}")
     end
   end
 

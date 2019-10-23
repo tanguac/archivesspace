@@ -16,12 +16,15 @@
 
       <%= form.label_and_textfield "identifier" %>
       <%= form.label_and_textfield "title" %>
+
+      <%= render_aspace_partial :partial => "shared/slug", :locals => {:form => form, :record_type => @classification} if AppConfig[:use_human_readable_urls] %>
+
       <%= form.label_and_textarea "description" %>
 
       <% form.push("creator", form["creator"] || {}) do %>
         <%= render_aspace_partial :partial => "agents/linker", :locals => {:form => form, :linker_label => I18n.t("classification.creator"), :optional => true, :multiplicity => "one"} %>
       <% end %>
-     
+
       <%= render_aspace_partial :partial => "shared/subrecord_form", :locals => {:form => form, :name => "linked_records"} %>
 
     </section>

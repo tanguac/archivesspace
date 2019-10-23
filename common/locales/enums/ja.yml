@@ -291,10 +291,12 @@ ja:
       ingest: 指定されていないソース
       lcshac: 議会図書館の子供の主題見出し
       local: ローカルソース
+      lcnaf: 議会図書館の権限ファイル
       naf: NACO権限ファイル
       nad: NAD / ARK II名前権限データベース
       nal: 国立農業図書館の見出し見出し
       rvm: 件名見出しディレクトリ
+      ram: RAMEAU機関ディレクトリ
       ulan: アーティスト名の連合リスト
     name_rule:
       local: ローカルルール
@@ -436,6 +438,7 @@ ja:
       nal: 国立農業図書館の見出し見出し
       rbgenr: ジャンル用語：レアブックや特別コレクションのカタログ化に使用するシソーラス
       rvm: 件名見出しディレクトリ
+      ram: RAMEAU機関ディレクトリ
       tgn: Geographic Namesのゲットシソーラス
       lcgft: 議会図書館のジャンル/フォーム利用規約
     event_outcome:
@@ -581,6 +584,7 @@ ja:
       chv: チュヴァシ語
       chy: シャイアン語
       cmc: チャム諸語
+      cnr: モンテネグリン
       cop: コプト語
       cor: コーンウォール語
       cos: コルシカ語
@@ -843,7 +847,6 @@ ja:
       pra: プラークリット
       pro: 古プロヴァンス語
       pus: パシュトー語
-      qaa-qtz: (保留中のコード)
       que: ケチュア語
       raj: ラージャスターン語
       rap: ラパ・ヌイ語
@@ -971,12 +974,213 @@ ja:
       zap: サポテク語
       zbl: ブリスシンボル
       zen: ゼナガ語
+      zgh: 標準的なモロッコのTamazight
       zha: チワン語
       znd: ザンデ諸語（英語版）
       zul: ズールー語
       zun: ズニ語
       zxx: 言語的でない内容
       zza: ザザキ語
+    script_iso15924:
+      Adlm: Adlam
+      Afak: Afaka
+      Aghb: Caucasian Albanian
+      Ahom: Ahom, Tai Ahom
+      Arab: Arabic
+      Aran: Arabic (Nastaliq variant)
+      Armi: Imperial Aramaic
+      Armn: Armenian
+      Avst: Avestan
+      Bali: Balinese
+      Bamu: Bamum
+      Bass: Bassa Vah
+      Batk: Batak
+      Beng: Bengali (Bangla)
+      Bhks: Bhaiksuki
+      Blis: Blissymbols
+      Bopo: Bopomofo
+      Brah: Brahmi
+      Brai: Braille
+      Bugi: Buginese
+      Buhd: Buhid
+      Cakm: Chakma
+      Cans: Unified Canadian Aboriginal Syllabics
+      Cari: Carian
+      Cham: Cham
+      Cher: Cherokee
+      Cirt: Cirth
+      Copt: Coptic
+      Cpmn: Cypro-Minoan
+      Cprt: Cypriot syllabary
+      Cyrl: Cyrillic
+      Cyrs: Cyrillic (Old Church Slavonic variant)
+      Deva: Devanagari (Nagari)
+      Dogr: Dogra
+      Dsrt: Deseret (Mormon)
+      Dupl: Duployan shorthand, Duployan stenography
+      Egyd: Egyptian demotic
+      Egyh: Egyptian hieratic
+      Egyp: Egyptian hieroglyphs
+      Elba: Elbasan
+      Elym: Elymaic
+      Ethi: Ethiopic (Geʻez)
+      Geok: Khutsuri (Asomtavruli and Nuskhuri)
+      Geor: Georgian (Mkhedruli and Mtavruli)
+      Glag: Glagolitic
+      Gong: Gunjala Gondi
+      Gonm: Masaram Gondi
+      Goth: Gothic
+      Gran: Grantha
+      Grek: Greek
+      Gujr: Gujarati
+      Guru: Gurmukhi
+      Hanb: Han with Bopomofo (alias for Han + Bopomofo)
+      Hang: Hangul (Hangŭl, Hangeul)
+      Hani: Han (Hanzi, Kanji, Hanja)
+      Hano: Hanunoo (Hanunóo)
+      Hans: Han (Simplified variant)
+      Hant: Han (Traditional variant)
+      Hatr: Hatran
+      Hebr: Hebrew
+      Hira: Hiragana
+      Hluw: Anatolian Hieroglyphs (Luwian Hieroglyphs, Hittite Hieroglyphs)
+      Hmng: Pahawh Hmong
+      Hmnp: Nyiakeng Puachue Hmong
+      Hrkt: Japanese syllabaries (alias for Hiragana + Katakana)
+      Hung: Old Hungarian (Hungarian Runic)
+      Inds: Indus (Harappan)
+      Ital: Old Italic (Etruscan, Oscan, etc.)
+      Jamo: Jamo (alias for Jamo subset of Hangul)
+      Java: Javanese
+      Jpan: Japanese (alias for Han + Hiragana + Katakana)
+      Jurc: Jurchen
+      Kali: Kayah Li
+      Kana: Katakana
+      Khar: Kharoshthi
+      Khmr: Khmer
+      Khoj: Khojki
+      Kitl: Khitan large script
+      Kits: Khitan small script
+      Knda: Kannada
+      Kore: Korean (alias for Hangul + Han)
+      Kpel: Kpelle
+      Kthi: Kaithi
+      Lana: Tai Tham (Lanna)
+      Laoo: Lao
+      Latf: Latin (Fraktur variant)
+      Latg: Latin (Gaelic variant)
+      Latn: Latin
+      Leke: Leke
+      Lepc: Lepcha (Róng)
+      Limb: Limbu
+      Lina: Linear A
+      Linb: Linear B
+      Lisu: Lisu (Fraser)
+      Loma: Loma
+      Lyci: Lycian
+      Lydi: Lydian
+      Mahj: Mahajani
+      Maka: Makasar
+      Mand: Mandaic, Mandaean
+      Mani: Manichaean
+      Marc: Marchen
+      Maya: Mayan hieroglyphs
+      Medf: Medefaidrin (Oberi Okaime, Oberi Ɔkaimɛ)
+      Mend: Mende Kikakui
+      Merc: Meroitic Cursive
+      Mero: Meroitic Hieroglyphs
+      Mlym: Malayalam
+      Modi: Modi, Moḍī
+      Mong: Mongolian
+      Moon: Moon (Moon code, Moon script, Moon type)
+      Mroo: Mro, Mru
+      Mtei: Meitei Mayek (Meithei, Meetei)
+      Mult: Multani
+      Mymr: Myanmar (Burmese)
+      Nand: Nandinagari
+      Narb: Old North Arabian (Ancient North Arabian)
+      Nbat: Nabataean
+      Newa: Newa, Newar, Newari, Nepāla lipi
+      Nkdb: Naxi Dongba (na²¹ɕi³³ to³³ba²¹, Nakhi Tomba)
+      Nkgb: Naxi Geba (na²¹ɕi³³ gʌ²¹ba²¹, 'Na-'Khi ²Ggŏ-¹baw, Nakhi Geba)
+      Nkoo: N’Ko
+      Nshu: Nüshu
+      Ogam: Ogham
+      Olck: Ol Chiki (Ol Cemet’, Ol, Santali)
+      Orkh: Old Turkic, Orkhon Runic
+      Orya: Oriya (Odia)
+      Osge: Osage
+      Osma: Osmanya
+      Palm: Palmyrene
+      Pauc: Pau Cin Hau
+      Perm: Old Permic
+      Phag: Phags-pa
+      Phli: Inscriptional Pahlavi
+      Phlp: Psalter Pahlavi
+      Phlv: Book Pahlavi
+      Phnx: Phoenician
+      Plrd: Miao (Pollard)
+      Piqd: Klingon (KLI pIqaD)
+      Prti: Inscriptional Parthian
+      Qaaa: Reserved for private use (start)
+      Qabx: Reserved for private use (end)
+      Rjng: Rejang (Redjang, Kaganga)
+      Rohg: Hanifi Rohingya
+      Roro: Rongorongo
+      Runr: Runic
+      Samr: Samaritan
+      Sara: Sarati
+      Sarb: Old South Arabian
+      Saur: Saurashtra
+      Sgnw: SignWriting
+      Shaw: Shavian (Shaw)
+      Shrd: Sharada, Śāradā
+      Shui: Shuishu
+      Sidd: Siddham, Siddhaṃ, Siddhamātṛkā
+      Sind: Khudawadi, Sindhi
+      Sinh: Sinhala
+      Sogd: Sogdian
+      Sogo: Old Sogdian
+      Sora: Sora Sompeng
+      Soyo: Soyombo
+      Sund: Sundanese
+      Sylo: Syloti Nagri
+      Syrc: Syriac
+      Syre: Syriac (Estrangelo variant)
+      Syrj: Syriac (Western variant)
+      Syrn: Syriac (Eastern variant)
+      Tagb: Tagbanwa
+      Takr: Takri, Ṭākrī, Ṭāṅkrī
+      Tale: Tai Le
+      Talu: New Tai Lue
+      Taml: Tamil
+      Tang: Tangut
+      Tavt: Tai Viet
+      Telu: Telugu
+      Teng: Tengwar
+      Tfng: Tifinagh (Berber)
+      Tglg: Tagalog (Baybayin, Alibata)
+      Thaa: Thaana
+      Thai: Thai
+      Tibt: Tibetan
+      Tirh: Tirhuta
+      Ugar: Ugaritic
+      Vaii: Vai
+      Visp: Visible Speech
+      Wara: Warang Citi (Varang Kshiti)
+      Wcho: Wancho
+      Wole: Woleai
+      Xpeo: Old Persian
+      Xsux: Cuneiform, Sumero-Akkadian
+      Yiii: Yi
+      Zanb: Zanabazar Square (Zanabazarin Dörböljin Useg, Xewtee Dörböljin Bicig, Horizontal Square Script)
+      Zinh: Code for inherited script
+      Zmth: Mathematical notation
+      Zsye: Symbols (Emoji variant)
+      Zsym: Symbols
+      Zxxx: Code for unwritten documents
+      Zyyy: Code for undetermined script
+      Zzzz: Code for uncoded script
     archival_record_level:
       class: クラス
       collection: コレクション
@@ -1217,7 +1421,7 @@ ja:
       NU: ニウエ
       NF: ノーフォーク島
       MP: 北マリアナ諸島
-      NO: ノルウェー
+      "NO": ノルウェー
       OM: オマーン
       PK: パキスタン
       PW: パラオ
@@ -1343,6 +1547,7 @@ ja:
       appraisal: 審査
       arrangement: 配置
       bibliography: 参考文献
+      note_bibliography: 参考文献
       bioghist: 伝記/歴史
       custodhist: 親権史
       fileplan: ファイルプラン
@@ -1372,6 +1577,8 @@ ja:
       physfacet: 物理ファセット
       rights_statement: 権利
     note_digital_object_type:
+      <<: *note_type_definitions
+    note_langmaterial_type:
       <<: *note_type_definitions
     note_multipart_type:
       <<: *note_type_definitions
@@ -1592,6 +1799,7 @@ ja:
     file_version_xlink_show_attribute: ファイルのバージョンXlinkの表示属性
     instance_instance_type: インスタンスインスタンスタイプ
     language_iso639_2: 言語ISO 639-2
+    script_iso15924: 言語スクリプトISO 15924
     linked_agent_archival_record_relators: リンクされたエージェントのアーカイブレコードリレー
     linked_agent_event_roles: リンクされたエージェントイベントの役割
     linked_agent_role: リンクされたエージェントの役割
@@ -1602,6 +1810,7 @@ ja:
     name_source: 名前ソース
     note_bibliography_type: 注参考文献タイプ
     note_digital_object_type: メモデジタルオブジェクトタイプ
+    note_langmaterial_type: 品目タイプの注記言語
     note_index_item_type: 索引項目タイプ
     note_index_type: インデックスタイプ
     note_multipart_type: マルチパートタイプ

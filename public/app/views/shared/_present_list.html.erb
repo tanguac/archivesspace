@@ -1,6 +1,6 @@
 <% if list.kind_of? Hash
    list.each do |k,v| %>
-   <h4><%= k %></h4>
+   <h3><%= k %></h3>
    <ul class="present_list <%= list_clss %>">
    <% v.each do |item | %>
      <li>
@@ -38,6 +38,9 @@
         <%= item['title'] %>
         <% unless item['uri'].blank? %>
          </a>
+         <% if list_clss == 'subjects_list' && AppConfig[:show_source_in_subject_listing] %>
+          <strong><%= t("subject.subject_source") %>: </strong><%= t("enumerations.subject_source.#{item['source']}") %>
+         <% end %>
         <% end %>
        <% else %>
          <%= item %>

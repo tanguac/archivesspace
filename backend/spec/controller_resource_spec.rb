@@ -8,12 +8,26 @@ describe 'Resources controller' do
 
 
   it "lets you create a resource and get it back" do
-    resource = JSONModel(:resource).from_hash("title" => "a resource", "dates" => [{  "date_type" => "single", "label" => "creation", "expression" => "1901" }],
-                                              "id_0" => "abc123", "level" => "collection", "language" => "eng",
-                                              "extents" => [{"portion" => "whole", "number" => "5 or so", "extent_type" => "reels"}])
-    id = resource.save
+    resource = JSONModel(:resource).from_hash("title" => "a resource",
+                                              "dates" => [{
+                                                "date_type" => "single",
+                                                "label" => "creation",
+                                                "expression" => "1901" }],
+                                              "id_0" => "abc123",
+                                              "level" => "collection",
+                                              "lang_materials" => [{
+                                                "language_and_script" => {
+                                                  "language" => "eng",
+                                                  "script" => "Latn"}}],
+                                              "finding_aid_language" => "eng",
+                                              "finding_aid_script" => "Latn",
+                                              "extents" => [{
+                                                "portion" => "whole",
+                                                "number" => "5 or so",
+                                                "extent_type" => "reels"}])
 
-    JSONModel(:resource).find(id).title.should eq("a resource")
+    id = resource.save
+    expect(JSONModel(:resource).find(id).title).to eq("a resource")
   end
 
 
@@ -23,7 +37,7 @@ describe 'Resources controller' do
     resource.title = "an updated resource"
     resource.save
 
-    JSONModel(:resource).find(resource.id).title.should eq("an updated resource")
+    expect(JSONModel(:resource).find(resource.id).title).to eq("an updated resource")
   end
 
 
@@ -35,12 +49,64 @@ describe 'Resources controller' do
   end
 
 
+  it "lets you create a resource with a language" do
+    opts = {:language_and_script => {:language => generate(:language)}}
+
+    lang_materials = [build(:json_lang_material, opts)]
+
+    resource = create(:json_resource, :lang_materials => lang_materials)
+
+    expect(JSONModel(:resource).find(resource.id).lang_materials[0]['language_and_script']['language'].length).to eq(3)
+    expect(JSONModel(:resource).find(resource.id).lang_materials[0]['note']).to eq(nil)
+  end
+
+
+  it "doesn't let you create a resource without at least one language" do
+    expect {
+      create(:json_resource,
+             :lang_materials => nil)
+    }.to raise_error(JSONModel::ValidationException)
+   end
+
+
+  it "doesn't let you create a resource without a finding_aid_language" do
+    expect {
+      create(:json_resource,
+             :finding_aid_language => nil)
+    }.to raise_error(JSONModel::ValidationException)
+  end
+
+
+  it "doesn't let you create a resource without a finding_aid_script" do
+    expect {
+      create(:json_resource,
+             :finding_aid_script => nil)
+    }.to raise_error(JSONModel::ValidationException)
+  end
+
+
+  it "doesn't let you create a resource with a script of scripty" do
+    expect {
+      create(:json_resource,
+             :lang_materials => [build(:json_lang_material, {:language_and_script => {:script=> 'scripty'}})])
+    }.to raise_error(JSONModel::ValidationException)
+  end
+
+
+  it "doesn't let you create a resource with a finding_aid_language of klingon" do
+    expect {
+      create(:json_resource,
+             :finding_aid_language => "klingon")
+    }.to raise_error(JSONModel::ValidationException)
+  end
+
+
   it "can handle asking for the tree of an empty resource" do
     resource = create(:json_resource)
 
     tree = JSONModel(:resource_tree).find(nil, :resource_id => resource.id)
 
-    tree.children.length.should eq(0)
+    expect(tree.children.length).to eq(0)
   end
 
 
@@ -64,8 +130,8 @@ describe 'Resources controller' do
 
     tree = JSONModel(:resource_tree).find(nil, :resource_id => resource.id).to_hash
 
-    tree['children'][0]['record_uri'].should eq(aos[0].uri)
-    tree['children'][0]['children'][0]['record_uri'].should eq(aos[1].uri)
+    expect(tree['children'][0]['record_uri']).to eq(aos[0].uri)
+    expect(tree['children'][0]['children'][0]['record_uri']).to eq(aos[1].uri)
   end
 
 
@@ -80,7 +146,7 @@ describe 'Resources controller' do
 
     resource = create(:json_resource, :subjects => [{:ref => subject.uri}])
 
-    JSONModel(:resource).find(resource.id).subjects[0]['ref'].should eq(subject.uri)
+    expect(JSONModel(:resource).find(resource.id).subjects[0]['ref']).to eq(subject.uri)
   end
 
 
@@ -93,10 +159,10 @@ describe 'Resources controller' do
     end
 
     resources = JSONModel(:resource).all(:page => 1)['results']
-    resources.any? { |res| res.title == generate(:generic_title) }.should == false
+    expect(resources.any? { |res| res.title == generate(:generic_title) }).to be_falsey
 
     powers.each do |p|
-      resources.any? { |res| res.title == p }.should == true
+      expect(resources.any? { |res| res.title == p }).to be_truthy
     end
   end
 
@@ -108,8 +174,8 @@ describe 'Resources controller' do
 
     resource = create(:json_resource, :extents => extents)
 
-    JSONModel(:resource).find(resource.id).extents.length.should eq(1)
-    JSONModel(:resource).find(resource.id).extents[0]["portion"].should eq(opts[:portion])
+    expect(JSONModel(:resource).find(resource.id).extents.length).to eq(1)
+    expect(JSONModel(:resource).find(resource.id).extents[0]["portion"]).to eq(opts[:portion])
   end
 
 
@@ -118,9 +184,9 @@ describe 'Resources controller' do
 
     id = create(:json_resource, :instances => [instance]).id
 
-    JSONModel(:resource).find(id).instances.length.should eq(1)
-    JSONModel(:resource).find(id).instances[0]["instance_type"].should eq(instance[:instance_type])
-    JSONModel(:resource).find(id).instances[0]["sub_container"]["type_2"].should eq(instance[:sub_container]['type_2'])
+    expect(JSONModel(:resource).find(id).instances.length).to eq(1)
+    expect(JSONModel(:resource).find(id).instances[0]["instance_type"]).to eq(instance[:instance_type])
+    expect(JSONModel(:resource).find(id).instances[0]["sub_container"]["type_2"]).to eq(instance[:sub_container]['type_2'])
   end
 
 
@@ -136,12 +202,12 @@ describe 'Resources controller' do
     ).id
 
     resource = JSONModel(:resource).find(id)
-    resource.instances.length.should eq(1)
-    resource.instances[0]["instance_type"].should eq(opts[:instance_type])
-    resource.instances[0]["digital_object"]["ref"].should eq(opts[:digital_object][:ref])
+    expect(resource.instances.length).to eq(1)
+    expect(resource.instances[0]["instance_type"]).to eq(opts[:instance_type])
+    expect(resource.instances[0]["digital_object"]["ref"]).to eq(opts[:digital_object][:ref])
 
     digital_object = JSONModel(:digital_object).find(digital_object.id)
-    digital_object.linked_instances[0]["ref"].should eq(resource.uri)
+    expect(digital_object.linked_instances[0]["ref"]).to eq(resource.uri)
   end
 
 
@@ -159,8 +225,8 @@ describe 'Resources controller' do
 
     resource.save
 
-    JSONModel(:resource).find(id).instances[0]["instance_type"].should_not eq(instance[:instance_type])
-    JSONModel(:resource).find(id).instances[0]["instance_type"].should eq(new_instance_type)
+    expect(JSONModel(:resource).find(id).instances[0]["instance_type"]).not_to eq(instance[:instance_type])
+    expect(JSONModel(:resource).find(id).instances[0]["instance_type"]).to eq(new_instance_type)
   end
 
   it "lets you create a resource with an instance with a container with a location (and the location is resolved)" do
@@ -184,8 +250,8 @@ describe 'Resources controller' do
 
     container_location = obj.instances[0]["sub_container"]['top_container']['_resolved']["container_locations"][0]
 
-    container_location["status"].should eq(status)
-    container_location["_resolved"]["building"].should eq(location.building)
+    expect(container_location["status"]).to eq(status)
+    expect(container_location["_resolved"]["building"]).to eq(location.building)
   end
 
 
@@ -206,7 +272,7 @@ describe 'Resources controller' do
     #
     JSONModel.with_repository(nil) do
       accession_ref = JSONModel(:resource).find(resource.id, :repo_id => $repo_id)["related_accessions"][0]
-      accession_ref["ref"].should eq("/repositories/#{$repo_id}/accessions/#{accession.id}")
+      expect(accession_ref["ref"]).to eq("/repositories/#{$repo_id}/accessions/#{accession.id}")
     end
   end
 
@@ -232,7 +298,7 @@ describe 'Resources controller' do
     resource = JSONModel(:resource).find(r.id, "resolve[]" => ["subjects"])
 
     # yowza!
-    resource["subjects"][0]["_resolved"]["terms"][0]["term"].should eq(test_subject_term)
+    expect(resource["subjects"][0]["_resolved"]["terms"][0]["term"]).to eq(test_subject_term)
   end
 
 
@@ -250,9 +316,9 @@ describe 'Resources controller' do
                })]
                )
 
-    JSONModel(:resource).find(r.id).deaccessions.length.should eq(1)
-    JSONModel(:resource).find(r.id).deaccessions[0]["scope"].should eq("whole")
-    JSONModel(:resource).find(r.id).deaccessions[0]["date"]["begin"].should eq(test_begin_date)
+    expect(JSONModel(:resource).find(r.id).deaccessions.length).to eq(1)
+    expect(JSONModel(:resource).find(r.id).deaccessions[0]["scope"]).to eq("whole")
+    expect(JSONModel(:resource).find(r.id).deaccessions[0]["date"]["begin"]).to eq(test_begin_date)
   end
 
 
@@ -269,7 +335,7 @@ describe 'Resources controller' do
     ao2.save
 
     tree = JSONModel(:resource_tree).find(nil, :resource_id => resource.id)
-    tree.children.length.should eq(2)
+    expect(tree.children.length).to eq(2)
   end
 
 
@@ -284,7 +350,7 @@ describe 'Resources controller' do
     resource = JSONModel(:resource).find(resource.id)
 
     # Adding the extent to the archival object shouldn't affect the resource's extents.
-    resource.extents.length.should eq(1)
+    expect(resource.extents.length).to eq(1)
   end
 
 
@@ -298,8 +364,8 @@ describe 'Resources controller' do
     resource.notes = [notes, index]
     resource.save
 
-    JSONModel(:resource).find(resource.id)[:notes].first['content'].should eq(notes.to_hash['content'])
-    JSONModel(:resource).find(resource.id)[:notes].last['content'].should eq(index.to_hash['content'])
+    expect(JSONModel(:resource).find(resource.id)[:notes].first['content']).to eq(notes.to_hash['content'])
+    expect(JSONModel(:resource).find(resource.id)[:notes].last['content']).to eq(index.to_hash['content'])
   end
 
 
@@ -310,7 +376,7 @@ describe 'Resources controller' do
     resource.notes = [notes]
     resource.save
 
-    JSONModel(:resource).find(resource.id)[:notes].first['persistent_id'].should_not be(nil)
+    expect(JSONModel(:resource).find(resource.id)[:notes].first['persistent_id']).not_to be_nil
   end
 
 
@@ -337,8 +403,8 @@ describe 'Resources controller' do
                                                          {:ref => agent_b.uri, :role => 'creator'},
                                                         ])
 
-    JSONModel(:resource).find(resource.id).linked_agents[0]['ref'].should eq(agent_a.uri)
-    JSONModel(:resource).find(resource.id).linked_agents[1]['ref'].should eq(agent_b.uri)
+    expect(JSONModel(:resource).find(resource.id).linked_agents[0]['ref']).to eq(agent_a.uri)
+    expect(JSONModel(:resource).find(resource.id).linked_agents[1]['ref']).to eq(agent_b.uri)
 
     agent_c = create(:json_agent_corporate_entity)
 
@@ -349,9 +415,9 @@ describe 'Resources controller' do
     ]
     resource.save
 
-    JSONModel(:resource).find(resource.id).linked_agents[0]['ref'].should eq(agent_c.uri)
-    JSONModel(:resource).find(resource.id).linked_agents[1]['ref'].should eq(agent_b.uri)
-    JSONModel(:resource).find(resource.id).linked_agents[2]['ref'].should eq(agent_a.uri)
+    expect(JSONModel(:resource).find(resource.id).linked_agents[0]['ref']).to eq(agent_c.uri)
+    expect(JSONModel(:resource).find(resource.id).linked_agents[1]['ref']).to eq(agent_b.uri)
+    expect(JSONModel(:resource).find(resource.id).linked_agents[2]['ref']).to eq(agent_a.uri)
   end
 
 
@@ -367,7 +433,7 @@ describe 'Resources controller' do
                                                          }
                                                         ])
 
-    JSONModel(:resource).find(resource.id).linked_agents[0]['title'].should eq('the title')
+    expect(JSONModel(:resource).find(resource.id).linked_agents[0]['title']).to eq('the title')
   end
 
 
@@ -402,14 +468,14 @@ describe 'Resources controller' do
 
 
     resource = JSONModel(:resource).find(resource.id)
-    resource.publish.should eq(true)
-    resource.external_documents[0]["publish"].should eq(true)
-    resource.notes[0]["publish"].should eq(true)
+    expect(resource.publish).to be_truthy
+    expect(resource.external_documents[0]["publish"]).to be_truthy
+    expect(resource.notes[0]["publish"]).to be_truthy
 
     archival_object = JSONModel(:archival_object).find(archival_object.id)
-    archival_object.publish.should eq(true)
-    archival_object.external_documents[0]["publish"].should eq(true)
-    archival_object.notes[0]["publish"].should eq(true)
+    expect(archival_object.publish).to be_truthy
+    expect(archival_object.external_documents[0]["publish"]).to be_truthy
+    expect(archival_object.notes[0]["publish"]).to be_truthy
   end
 
 
@@ -427,13 +493,13 @@ describe 'Resources controller' do
     response = JSONModel::HTTP.post_json(url, children.to_json)
     json_response = ASUtils.json_parse(response.body)
 
-    json_response["status"].should eq("Updated")
+    expect(json_response["status"]).to eq("Updated")
 
     tree = JSONModel(:resource_tree).find(nil, :resource_id => resource.id)
-    tree.children.length.should eq(2)
+    expect(tree.children.length).to eq(2)
 
-    tree.children[0]["title"].should eq(archival_object_1["title"])
-    tree.children[1]["title"].should eq(archival_object_2["title"])
+    expect(tree.children[0]["title"]).to eq(archival_object_1["title"])
+    expect(tree.children[1]["title"]).to eq(archival_object_2["title"])
   end
 
 
@@ -447,19 +513,19 @@ describe 'Resources controller' do
     response = JSONModel::HTTP::post_form("#{resource.uri}/accept_children", {"children[]" => [child_1.uri, child_2.uri], "position" => 0})
     json_response = ASUtils.json_parse(response.body)
 
-    json_response["status"].should eq("Updated")
+    expect(json_response["status"]).to eq("Updated")
 
     tree = JSONModel(:resource_tree).find(nil, :resource_id => resource.id)
 
-    tree.children.length.should eq(3)
-    tree.children[0]["title"].should eq(child_1["title"])
-    tree.children[0]["record_uri"].should eq(child_1.uri)
+    expect(tree.children.length).to eq(3)
+    expect(tree.children[0]["title"]).to eq(child_1["title"])
+    expect(tree.children[0]["record_uri"]).to eq(child_1.uri)
 
-    tree.children[1]["title"].should eq(child_2["title"])
-    tree.children[1]["record_uri"].should eq(child_2.uri)
+    expect(tree.children[1]["title"]).to eq(child_2["title"])
+    expect(tree.children[1]["record_uri"]).to eq(child_2.uri)
 
-    tree.children[2]["title"].should eq(ao["title"])
-    tree.children[2]["record_uri"].should eq(ao.uri)
+    expect(tree.children[2]["title"]).to eq(ao["title"])
+    expect(tree.children[2]["record_uri"]).to eq(ao.uri)
   end
 
 
@@ -479,7 +545,7 @@ describe 'Resources controller' do
     archival_object.save
 
     ao = JSONModel(:archival_object).find(archival_object.id)
-    ao[:notes].first['items'].first['reference_ref']['ref'].should eq(linked_uri)
+    expect(ao[:notes].first['items'].first['reference_ref']['ref']).to eq(linked_uri)
   end
 
 
@@ -490,9 +556,18 @@ describe 'Resources controller' do
     uri = JSONModel(:resource).uri_for(resource.id) + "/models_in_graph"
 
     list = JSONModel::HTTP.get_json(uri)
-    list.should include('extent');
-    list.should_not include('subject');
+    expect(list).to include('extent');
+    expect(list).not_to include('subject');
 
   end
 
+  it "includes the ARK name in the resource's JSON" do
+    AppConfig[:arks_enabled] = true
+    resource = create(:json_resource)
+    ArkName.create_from_resource(resource)
+    uri = JSONModel(:resource).uri_for(resource.id)
+    json = JSONModel::HTTP.get_json(uri)
+    expect(json['ark_name']).to_not be_nil
+    expect(json['ark_name']['id']).to_not be_nil
+  end
 end

@@ -1,4 +1,5 @@
 require 'spec_helper'
+require_relative 'spec_slugs_helper'
 
 describe 'Digital object model' do
 
@@ -7,7 +8,7 @@ describe 'Digital object model' do
 
     digital_object = DigitalObject.create_from_json(json, :repo_id => $repo_id)
 
-    DigitalObject[digital_object[:id]].title.should eq(json.title)
+    expect(DigitalObject[digital_object[:id]].title).to eq(json.title)
   end
 
 
@@ -16,7 +17,7 @@ describe 'Digital object model' do
 
     json2 = build(:json_digital_object, :digital_object_id => '123')
 
-    expect { DigitalObject.create_from_json(json1, :repo_id => $repo_id) }.to_not raise_error
+    expect { DigitalObject.create_from_json(json1, :repo_id => $repo_id) }.not_to raise_error
     expect { DigitalObject.create_from_json(json2, :repo_id => $repo_id) }.to raise_error(Sequel::ValidationFailed)
   end
 
@@ -28,7 +29,7 @@ describe 'Digital object model' do
                                       :digital_object => {'ref' => digital_object.uri})])
 
     digital_object = JSONModel(:digital_object).find(digital_object.id)
-    digital_object.linked_instances.count.should eq(1)
+    expect(digital_object.linked_instances.count).to eq(1)
   end
 
 
@@ -82,7 +83,7 @@ describe 'Digital object model' do
     expect {
       DigitalObject.create_from_json(json)
 
-    }.to_not raise_error
+    }.not_to raise_error
 
   end
 
@@ -100,7 +101,7 @@ describe 'Digital object model' do
     obj = JSONModel(:digital_object).find(obj.id)
 
 
-    obj.file_versions.first['caption'].should eq("bar one");
+    expect(obj.file_versions.first['caption']).to eq("bar one");
   end
 
   it "deletes all related instances when digital object is deleted" do
@@ -132,9 +133,100 @@ describe 'Digital object model' do
 
     # Confirm all is still well with the resource
     resource = JSONModel(:resource).find(resource.id)
-    resource.should_not eq(nil)
-    resource.instances.count.should be(0)
+    expect(resource).not_to be_nil
+    expect(resource.instances.count).to be(0)
 
+  end
+
+  describe "slug tests" do
+    before(:all) do
+      AppConfig[:use_human_readable_urls] = true
+    end
+
+    describe "slug autogen enabled" do
+      describe "by name" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = false
+        end
+        it "autogenerates a slug via title" do
+          digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true, :title => rand(100000).to_s))
+          expected_slug = clean_slug(digital_object[:title])
+          expect(digital_object[:slug]).to eq(expected_slug)
+        end
+        it "cleans slug" do
+          digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true, :title => "Foo Bar Baz&&&&"))
+          expect(digital_object[:slug]).to eq("foo_bar_baz")
+        end
+
+        it "dedupes slug" do
+          digital_object1 = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true, :title => "foo"))
+          digital_object2 = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true, :title => "foo"))
+          expect(digital_object1[:slug]).to eq("foo")
+          expect(digital_object2[:slug]).to eq("foo_1")
+        end
+        it "turns off autogen if slug is blank" do
+          digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true))
+          digital_object.update(:slug => "")
+          expect(digital_object[:is_slug_auto]).to eq(0)
+        end
+      end
+      describe "by id" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = true
+        end
+        it "autogenerates a slug via identifier" do
+          digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true))
+          expected_slug = clean_slug(digital_object[:digital_object_id])
+          expect(digital_object[:slug]).to eq(expected_slug)
+        end
+        it "cleans slug" do
+          digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true, :digital_object_id => "Foo Bar Baz&&&&"))
+          expect(digital_object[:slug]).to eq("foo_bar_baz")
+        end
+
+        it "dedupes slug" do
+          digital_object1 = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true, :digital_object_id => "foo"))
+          digital_object2 = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => true, :digital_object_id => "foo#"))
+          expect(digital_object1[:slug]).to eq("foo")
+          expect(digital_object2[:slug]).to eq("foo_1")
+        end
+      end
+    end
+
+    describe "slug autogen disabled" do
+      before(:all) do
+        AppConfig[:auto_generate_slugs_with_id] = false
+      end
+      it "slug does not change when config set to autogen by title and title updated" do
+        digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => false, :slug => "foo"))
+        digital_object.update(:title => rand(100000000))
+        expect(digital_object[:slug]).to eq("foo")
+      end
+
+      it "slug does not change when config set to autogen by id and id updated" do
+        digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => false, :slug => "foo"))
+        digital_object.update(:digital_object_id => rand(100000000))
+        expect(digital_object[:slug]).to eq("foo")
+      end
+    end
+
+    describe "manual slugs" do
+      it "cleans manual slugs" do
+        digital_object = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => false))
+        digital_object.update(:slug => "Foo Bar Baz ###")
+        expect(digital_object[:slug]).to eq("foo_bar_baz")
+      end
+
+      it "dedupes manual slugs" do
+        digital_object1 = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => false, :slug => "foo"))
+        digital_object2 = DigitalObject.create_from_json(build(:json_digital_object, :is_slug_auto => false))
+
+        digital_object2.update(:slug => "foo")
+
+        expect(digital_object1[:slug]).to eq("foo")
+        expect(digital_object2[:slug]).to eq("foo_1")
+      end
+    end
   end
 
 end

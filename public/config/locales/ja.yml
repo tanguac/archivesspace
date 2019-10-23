@@ -1,3 +1,5 @@
+# NOTE: Many of the translations in this file have been generated using
+# Google translate
 ja:
   brand:
     title: ArchivesSpaceパブリックインターフェイス
@@ -9,6 +11,7 @@ ja:
     welcome_page_title: ArchivesSpaceパブリックインターフェイス
   actions:
     search: サーチ
+    search_header: アーカイブを検索
     search_within: 結果内で検索する
     search_in: 検索%{type}
     new_search: 新しい検索
@@ -34,6 +37,7 @@ ja:
     staff_link: 関係者以外立ち入り禁止
   page_actions: ページアクション
   request:
+    email_header: ご依頼ありがとうございます
     required: 必須
     user_name: あなたの名前
     user_email: メールアドレス
@@ -281,6 +285,7 @@ ja:
       header:
         dates: 日付
         lang: 言語
+        script: スクリプト
         physdesc: 身体的特徴
         storage: コンテナ情報
         access: アクセスを管理する条件
@@ -308,7 +313,8 @@ ja:
       identifier: 識別
       extent: エクステント
       dates: 日付
-      lang: 言語
+      lang: 材料の言語
+      script: スクリプト
       digital_object: デジタルオブジェクト
       physdesc: 身体的特徴
       storage: コンテナ情報
@@ -330,6 +336,8 @@ ja:
         description_rules: 説明ルール
         identifier: 識別
         language: 説明の言語
+        script: 説明のスクリプト
+        language_note: 説明文の言語
         sponsor: スポンサー
         edition_statement: 版ステートメント
         series_statement: シリーズ声明
@@ -1008,6 +1016,7 @@ ja:
       chv: チュヴァシ語
       chy: シャイアン語
       cmc: チャム諸語
+      cnr: モンテネグリン
       cop: コプト語
       cor: コーンウォール語
       cos: コルシカ語
@@ -1270,7 +1279,6 @@ ja:
       pra: プラークリット
       pro: 古プロヴァンス語
       pus: パシュトー語
-      qaa-qtz: (保留中のコード)
       que: ケチュア語
       raj: ラージャスターン語
       rap: ラパ・ヌイ語
@@ -1398,6 +1406,7 @@ ja:
       zap: サポテク語
       zbl: ブリスシンボル
       zen: ゼナガ語
+      zgh: 標準的なモロッコのTamazight
       zha: チワン語
       znd: ザンデ諸語（英語版）
       zul: ズールー語
@@ -1644,7 +1653,7 @@ ja:
       NU: ニウエ
       NF: ノーフォーク島
       MP: 北マリアナ諸島
-      NO: ノルウェー
+      "NO": ノルウェー
       OM: オマーン
       PK: パキスタン
       PW: パラオ
@@ -1831,12 +1840,6 @@ ja:
       novalue: 値が定義されていない
     user_defined_enum_4:
       novalue: 値が定義されていない
-    job_type:
-      print_to_pdf_job: PDFへの印刷
-      import_job: データのインポート
-      find_and_replace_job: バッチの検索と置換（ベータ版）
-      report_job: レポート
-      container_conversion_job: レポート
     dimension_units:
       inches: インチ
       feet: 足

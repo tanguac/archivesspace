@@ -2,19 +2,20 @@ class ExportsController < ApplicationController
 
   set_access_control  "view_repository" => [:container_labels, :download_marc, :download_dc, :download_mods,
                                             :download_mets, :download_ead, :download_eac]
+  set_access_control "create_job" => [:print_to_pdf]
 
   include ExportHelper
 
 
   def container_labels
-     download_export(
-       "/repositories/#{JSONModel::repository}/resource_labels/#{params[:id]}.tsv")
+    @resource = JSONModel(:resource).find(params[:id], find_opts)
+    render :layout => false
    end
 
 
   def download_marc
     download_export(
-      "/repositories/#{JSONModel::repository}/resources/marc21/#{params[:id]}.xml", 
+      "/repositories/#{JSONModel::repository}/resources/marc21/#{params[:id]}.xml",
       :include_unpublished_marc => params[:include_unpublished_marc]
       )
   end
@@ -59,6 +60,11 @@ class ExportsController < ApplicationController
   def download_eac
     download_export(
       "/repositories/#{JSONModel::repository}/archival_contexts/#{params[:type].sub(/^agent_/, '').pluralize}/#{params[:id]}.xml")
+  end
+
+  def print_to_pdf
+    @resource = JSONModel(:resource).find(params[:id], find_opts)
+    render :layout => false
   end
 
 

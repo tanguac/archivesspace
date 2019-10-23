@@ -53,13 +53,42 @@
         <div class="form-group">
           <div class="control-label col-sm-2"><%= I18n.t("assessment.records") %></div>
           <div class="controls token-list col-sm-10">
-            <% form['records'].each do |record| %>
-              <%= render_token :object => record['_resolved'],
-              :label => record['_resolved']['title'] || record['_resolved']['display_string'],
-              :type => record['_resolved']['jsonmodel_type'],
-              :uri => record['ref'],
-              :placement => "top" %>
-            <% end %>
+            <table class="table table-striped table-bordered table-condensed table-hover token-list">
+              <thead>
+                <tr>
+                  <td><%= I18n.t("assessment._frontend.linked_records.record_type") %></td>
+                  <td><%= I18n.t("assessment._frontend.linked_records.identifier") %></td>
+                  <td><%= I18n.t("assessment._frontend.linked_records.title") %></td>
+                </tr>
+              </thead>
+              <tbody>
+                <% form['records'].each do |record| %>
+                  <tr>
+                    <td><%= I18n.t("#{record['_resolved']['jsonmodel_type']}._singular") %></td>
+                    <% identifier = case record['_resolved']['jsonmodel_type']
+                    when 'digital_object'
+                      record['_resolved']['digital_object_id']
+                    when 'archival_object'
+                      resource = JSONModel(:resource).find(
+                        JSONModel.parse_reference(record['_resolved']['resource']['ref'])[:id])
+                      [(0..3).map{|i| resource["id_#{i}"] }.compact.join("-"),
+                        record['_resolved']['component_id']].compact.join(', ')
+                    else
+                      (0..3).map{|i| record["_resolved"]["id_#{i}"]}.compact.join("-")
+                    end
+                    %>
+                    <td><%= identifier %></td>
+                    <td>
+                      <%= render_token :object => record['_resolved'],
+                      :label => record['_resolved']['title'] || record['_resolved']['display_string'],
+                      :type => record['_resolved']['jsonmodel_type'],
+                      :uri => record['ref'],
+                      :placement => "top" %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
           </div>
         </div>
       <% else %>
@@ -73,42 +102,46 @@
         <% end %>
       <% end %>
 
-      <h4><%= I18n.t("assessment._frontend.section.existing_description") %></h4>
+      <% existing_descriptions = form.readonly? ? %w(accession_report appraisal container_list catalog_record
+            control_file deed_of_gift finding_aid_ead finding_aid_online
+            finding_aid_paper finding_aid_word finding_aid_spreadsheet
+            related_eac_records).select { |ed| form[ed] } : nil %>
+      <div class="form-group">
+        <% unless form.readonly? && existing_descriptions.empty? %>
+          <div class="control-label col-sm-2"><%= I18n.t("assessment._frontend.section.existing_description") %></div>
+        <% end %>
+        <div class="col-sm-10">
+          <% if form.readonly?  %>
+            <ul>
+              <% existing_descriptions.each do |existing_description| %>
+                <li>
+                  <td><%= I18n.t("assessment.#{existing_description}") %></td>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="row">
+              <div class="col-md-6">
+                <%= form.label_and_boolean 'accession_report', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'appraisal', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'container_list', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'catalog_record', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'control_file', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'deed_of_gift', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'finding_aid_ead', :label_opts => { :col_size => 6 } %>
+              </div>
 
-      <% if form.readonly? %>
-        <ul>
-          <% %w(accession_report appraisal container_list catalog_record
-                control_file deed_of_gift finding_aid_ead finding_aid_online
-                finding_aid_paper finding_aid_word finding_aid_spreadsheet
-                related_eac_records).each do |existing_description| %>
-            <% if form[existing_description] %>
-              <li>
-                <td><%= I18n.t("assessment.#{existing_description}") %></td>
-              </li>
-            <% end %>
+              <div class="col-md-6">
+                <%= form.label_and_boolean 'finding_aid_online', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'finding_aid_paper', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'finding_aid_word', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'finding_aid_spreadsheet', :label_opts => { :col_size => 6 } %>
+                <%= form.label_and_boolean 'related_eac_records', :label_opts => { :col_size => 6 } %>
+              </div>
+            </div>
           <% end %>
-        </ul>
-      <% else %>
-        <div class="row">
-          <div class="col-md-6">
-            <%= form.label_and_boolean 'accession_report', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'appraisal', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'container_list', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'catalog_record', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'control_file', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'deed_of_gift', :label_opts => { :col_size => 6 } %>
-          </div>
-
-          <div class="col-md-6">
-            <%= form.label_and_boolean 'finding_aid_ead', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'finding_aid_online', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'finding_aid_paper', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'finding_aid_word', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'finding_aid_spreadsheet', :label_opts => { :col_size => 6 } %>
-            <%= form.label_and_boolean 'related_eac_records', :label_opts => { :col_size => 6 } %>
-          </div>
         </div>
-      <% end %>
+      </div>
 
       <div class="row">
         <%= form.label_and_textarea 'existing_description_notes' %>
@@ -222,14 +255,14 @@
           <table id="rating_attributes_table" class="table table-bordered table-hover">
             <thead>
               <tr>
-                <th class="col-sm-5"></th>
+                <th class="col-sm-5"><span class="sr-only">Condition</span></th>
                 <th class="col-sm-1 text-center"><%= I18n.t('assessment.rating_attributes_value.rating_none') %></th>
                 <th class="col-sm-1 text-center"><%= I18n.t('assessment.rating_attributes_value.rating_1') %></th>
                 <th class="col-sm-1 text-center"><%= I18n.t('assessment.rating_attributes_value.rating_2') %></th>
                 <th class="col-sm-1 text-center"><%= I18n.t('assessment.rating_attributes_value.rating_3') %></th>
                 <th class="col-sm-1 text-center"><%= I18n.t('assessment.rating_attributes_value.rating_4') %></th>
                 <th class="col-sm-1 text-center"><%= I18n.t('assessment.rating_attributes_value.rating_5') %></th>
-                <th></th>
+                <th><span class="sr-only">Add attribute note?</span></th>
               </tr>
             </thead>
             <tbody>
@@ -247,7 +280,7 @@
 
                       <% rating_values_tooltip = rating_values_tooltip(rating) %>
                       <% if rating_values_tooltip %>
-                        <label class="pull-right ratings-value-tooltip glyphicon glyphicon-question-sign has-tooltip control-label" 
+                        <label class="pull-right ratings-value-tooltip glyphicon glyphicon-question-sign has-tooltip control-label"
                                data-trigger="manual"
                                data-html="true"
                                title="<%= rating_values_tooltip %>"
@@ -335,7 +368,7 @@
 
                         <% rating_values_tooltip = rating_values_tooltip(rating) %>
                         <% if rating_values_tooltip %>
-                          <label class="pull-right ratings-value-tooltip glyphicon glyphicon-question-sign has-tooltip control-label" 
+                          <label class="pull-right ratings-value-tooltip glyphicon glyphicon-question-sign has-tooltip control-label"
                                  data-trigger="manual"
                                  data-html="true"
                                  title="<%= rating_values_tooltip %>"
@@ -459,7 +492,7 @@
           <% if @assessment_attribute_definitions.repo_formats.length > 0 %>
             <div class="row">
               <div class="col-md-12">
-                <h5>
+                <h4>
                   <strong><%= I18n.t('assessment._frontend.section.format_attributes_additional') %></strong>
                   <div>
                     <small class="text-muted">
@@ -470,7 +503,7 @@
                       <% end %>
                     </small>
                   </div>
-                </h5>
+                </h4>
               </div>
             </div>
             <div class="row">
@@ -556,7 +589,7 @@
           <% if @assessment_attribute_definitions.repo_conservation_issues.length > 0 %>
             <div class="row">
               <div class="col-md-12">
-                <h5>
+                <h4>
                   <strong><%= I18n.t('assessment._frontend.section.conservation_issue_attributes_additional') %></strong>
                   <div>
                     <small class="text-muted">
@@ -567,7 +600,7 @@
                       <% end %>
                     </small>
                   </div>
-                </h5>
+                </h4>
               </div>
             </div>
             <div class="row">

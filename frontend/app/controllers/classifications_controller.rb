@@ -8,17 +8,17 @@ class ClassificationsController < ApplicationController
   include ExportHelper
 
   def index
-    respond_to do |format| 
-      format.html {   
+    respond_to do |format|
+      format.html {
         @search_data = Search.for_type(session[:repo_id], "classification", params_for_backend_search.merge({"facet[]" => SearchResultData.CLASSIFICATION_FACETS}))
       }
-      format.csv { 
+      format.csv {
         search_params = params_for_backend_search.merge({"facet[]" => SearchResultData.CLASSIFICATION_FACETS})
-        search_params["type[]"] = "classification" 
+        search_params["type[]"] = "classification"
         uri = "/repositories/#{session[:repo_id]}/search"
         csv_response( uri, search_params )
-      }  
-    end 
+      }
+    end
   end
 
   def show
@@ -65,12 +65,21 @@ class ClassificationsController < ApplicationController
       render action: "new"
     },
       :on_valid => ->(id){
-      redirect_to({
+
+        flash[:success] = I18n.t("classification._frontend.messages.created", JSONModelI18nWrapper.new(:classification => @classification))
+
+        if @classification["is_slug_auto"] == false &&
+            @classification["slug"] == nil &&
+            params["classification"] &&
+            params["classification"]["is_slug_auto"] == "1"
+          flash[:warning] = I18n.t("slug.autogen_disabled")
+        end
+
+        redirect_to({
                     :controller => :classifications,
                     :action => :edit,
                     :id => id
-                  },
-                  :flash => {:success => I18n.t("classification._frontend.messages.created", JSONModelI18nWrapper.new(:classification => @classification))})
+                  })
     })
   end
 
@@ -82,7 +91,15 @@ class ClassificationsController < ApplicationController
       render_aspace_partial :partial => "edit_inline"
     },
       :on_valid => ->(id){
-    flash.now[:success] = I18n.t("classification._frontend.messages.updated", JSONModelI18nWrapper.new(:classification => @classification))
+        flash.now[:success] = I18n.t("classification._frontend.messages.updated", JSONModelI18nWrapper.new(:classification => @classification))
+
+        if @classification["is_slug_auto"] == false &&
+            @classification["slug"] == nil &&
+            params["classification"] &&
+            params["classification"]["is_slug_auto"] == "1"
+          flash.now[:warning] = I18n.t("slug.autogen_disabled")
+        end
+
     render_aspace_partial :partial => "edit_inline"
     })
   end
@@ -185,7 +202,7 @@ class ClassificationsController < ApplicationController
     flash.keep
 
     tree = []
-    limit_to = if  params[:node_uri] && !params[:node_uri].include?("/classifications/") 
+    limit_to = if  params[:node_uri] && !params[:node_uri].include?("/classifications/")
                  params[:node_uri]
                else
                  "root"

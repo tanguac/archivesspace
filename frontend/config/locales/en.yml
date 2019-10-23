@@ -15,11 +15,13 @@ en:
     cut: Cut
     defaults: Default Values
     edit: Edit
+    edit_oai: Edit OAI Settings
     edit_batch: Edit Batch
     edit_groups: Edit Groups
     edit_default_values: Edit Default Values
     edit_default_archival_object_values: Edit Component Defaults
     edit_required_fields: Edit Required Fields
+    edit_global_oai: View/Edit Global OAI Settings
     required: Required Fields
     export: Export
     view: View
@@ -29,9 +31,14 @@ en:
     more: More
     link_to: Link To
     add_prefix: Add
+    merge_replace: Replace
+    merge_add: Add
     merge_confirm_title: Merge into this record?
+    merge_agent_compare_agent_details: Compare Agents
+    merge_from_browse_confirm_title: Merge selected records?
     merge_subject_confirm_message: "The subject '%{source}' will have the selected records merged into it. All selected records will be deleted and any linked records will be re-linked to this subject."
-    merge_agent_confirm_message: "The agent '%{source}' will have the selected records merged into it. All selected records will be deleted and any linked records will be re-linked to this agent."
+    merge_agent_confirm_message: "The agent '%{source}' will have the selected record merged into it. The selected record will be deleted and any linked records will be re-linked to this agent. Clicking the Compare Agents button will bring up a screen that gives you the option to choose which fields and sub-records to retain from each record."
+    merge_agent_from_browse_confirm_message: "The first agent selected will have the subsequently selected records merged into it. All subsequently selected records will be deleted and any linked records will be re-linked to the first agent selected."
     merge_resource_confirm_message: "The resource '%{source}' will have the selected records merged into it. All selected records will be deleted and any linked records will be re-linked to this resource."
     move: Move
     move_up_a_level: Up a Level
@@ -91,7 +98,7 @@ en:
     publish_confirm_message: "<p>Performing this action will publish this record, any sub-records (External Documents, Notes, etc) and all components in the hierarchy.</p>"
     view_search_results: Go to Search Results
     view_published: View Published
-    print_to_pdf: Print Resource To PDF
+    print_to_pdf: Generate PDF
     resource_to_pdf: Resource to Print
     download_pdf: Download PDF
     download_report: Download Report
@@ -151,7 +158,6 @@ en:
       level: Level
       classification_path: Classification
       accession_date_year: Accession Date
-      creators: Creator
       source: Source
       rules: Rules
       parent_type: Record Type
@@ -293,6 +299,7 @@ en:
     hide_advanced_search_button_title: Hide Advanced Search
     plugins: Plug-ins
     repositories_manage: Manage Repositories
+    oai_config: Manage OAI-PMH Settings
     manage_groups: Manage Groups
     manage_users: Manage Users
     manage_container_profiles: Manage Container Profiles
@@ -424,6 +431,8 @@ en:
     error_404_message: "The record you've tried to access may no longer exist or you may not have permission to view it."
     error_tree_pane_ajax: An error occurred loading this form.
     merge_conflict: "Merging agent(s) could not complete: %{message}"
+    merge_too_many_victims: Only one agent may be selected for this merge.
+    merge_different_types: Agents selected for this merge must be of the same type.
     linked_to_assessment: Record cannot be deleted as it is linked to an assessment
 
   accession:
@@ -452,7 +461,7 @@ en:
         updated: Agent Saved
         deleted: Agent Deleted
         delete_conflict: "Agent could not be deleted: <pre>%{error}</pre>"
-        merge_description: Select below agents to merge into
+        merge_description: Select the agent to merge into
         merged: Agent(s) Merged
         please_select_a_agent_to_merge: Please select an agent
       section:
@@ -462,8 +471,11 @@ en:
         contacts: Contact Details
         search_embedded: Linked Records
         linked_via_rights_statement: Linked Records via Rights Statement
+        target_record: This record will be updated
+        victim_record: This record will be deleted
       action:
         create: Create Agent
+        preview: Merge Preview
 
   agent_contact:
     _frontend:
@@ -496,6 +508,8 @@ en:
         save: Save Software
 
   archival_object:
+    external_ark_url: External ARK URL
+    external_ark_url_tooltip: External ARK URL Tooltip
     _frontend:
       messages:
         created: Archival Object <strong>%{archival_object.display_string}</strong> on Resource <strong>%{resource.title}</strong> created
@@ -696,6 +710,12 @@ en:
         add_digital_object: Add Digital Object
         add: Add Instance
 
+  lang_material:
+    _frontend:
+      action:
+        add: Add Language
+        add_note: Add Language Note
+
   linked_agent:
     _frontend:
       action:
@@ -829,9 +849,11 @@ en:
         oai_settings: OAI Settings
       action:
         select: Select Repository
-        create: Create Repository
         save: Save Repository
         create: Create Repository
+    _sidebar:
+      oai_settings:
+        _plural: OAI Harvest Settings
 
   resource:
     _frontend:
@@ -858,6 +880,8 @@ en:
         create: Create Resource
         save: Save Resource
         delete_multiple: Delete Resources
+    external_ark_url: External ARK URL
+    external_ark_url_tooltip: Archival Resource Key (ARK) persistent identifier generated outside of ArchivesSpace. If this field has a value it takes precedence over an ARK generated within ArchivesSpace.
 
   preference:
     _frontend:
@@ -933,6 +957,7 @@ en:
     column_label: Column
     sections:
       basic_information: Basic Information
+      language: Language
       date: Date
       extent: Extent
       instance: Instance
@@ -1013,9 +1038,9 @@ en:
   job:
     _frontend:
       audit_data: Audit Data
-      actions:
+      action:
         create: Create Job
-        save: Queue Job
+        save: Start Job
         new: New Background Job
         cancel: Cancel Job
         add_file: Add file
@@ -1035,6 +1060,7 @@ en:
         status_changed_canceled: The job has been canceled.
         no_active_jobs: There are no active jobs.
         no_archived_jobs: There are no archived jobs.
+        uploading: Uploading job...
         upload_successful: Upload Successful. Redirecting to Job page...
         import_type_missing: Please select an Import Type
         queue_position_next: This job is next in the queue.
@@ -1043,6 +1069,14 @@ en:
         find_and_replace_warning: Find and replace jobs can and will make major changes to your database. You are <strong>strongly</strong> advised to backup your database AND to run your job in a test instance before proceeding. There is no "undo".
         find_and_replace_instructions: Choose a base record to scope this find and replace operation. Then choose a record type to target and a property of that type. The operation will run in every target record in the tree of the base record, or in the base record itself if the target type is "Resource".
         report_instructions: Choose a report to run by using the <b>Select</b> button.
+        slug_lost_warning: <b>WARNING! </b> All auto-generated slugs will be regenerated! This job applies to all records across all repositories.
+        slug_generation: This job will generate slugs for all <b>Resources</b>, <b>Archival Objects</b>, <b>Digital Objects</b>, <b>Digital Object Components</b>, <b>Accessions</b>, <b>Classifications</b>, <b>Agents</b>, <b>Subjects</b>, and <b>Repositories</b> that do not already have a manually added slug. <br /><br /><em>Slugs that have been manually added will not be changed, unless the Automatically Generate Slug box on the record has been checked to indicate that the slug should be replaced.</em>
+        slug_config_msg: <b>Based on your configuration settings in config.rb:</b>
+        slug_config_id: Slugs will be generated using the entity identifier where appropriate.
+        slug_config_title: Slugs will be generated using the entity name or title.
+        slug_config_eadid: Slugs for <b>Resources</b> will be generated using the EAD ID where appropriate.
+        slug_config_cuid: Slugs for <b>Archival Objects</b> will be generated using the Component Unique ID where appropriate.
+        ark_generation: This job will generate ARKs for all <b>Resources</b> and <b>Archival Objects</b> that do not already have an ARK. <br /><br /><em>External ARKs will not be changed.</em>
 
   shortcuts:
     quick_reference_window: "Quick Reference: Keyboard Shortcuts"
@@ -1095,7 +1129,7 @@ en:
         <p>Used to record the barcode that uniquely identifies the highest level container.</p>
     type: Container Type
     type_tooltip: |
-        <p>The type of the highest level container.
+        <p>The type of the highest level container.</p>
         <p>Values in this Controlled Value List may be modified.</p>
     ils_holding_id: ILS Holding ID
     ils_holding_id_tooltip: |
@@ -1307,7 +1341,6 @@ en:
     message_total_containers: "Total number of containers of this type found at these locations: %{total_containers}"
     message_loading: Loading...
     count: Space Available (of container type)
-    reason: Calculator Result
     calculate_space: Check for Space
     locations_without_space_details: Review locations without space
     by_locations: By Location(s)
@@ -1368,7 +1401,7 @@ en:
         format_attributes_additional: Additional Material Types / Formats
         conservation_issue_attributes: Conservation Issues
         conservation_issue_attributes_empty: No conservation issues entered
-        conservation_issue_attributes_additional: Additonal Conservation Issues
+        conservation_issue_attributes_additional: Additional Conservation Issues
       messages:
         created: Assessment Created
         updated: Assessment Updated
@@ -1394,6 +1427,9 @@ en:
         linked_via_assessment_records: Assessments
         linked_via_assessment_surveyed_by: Assessments - Surveyed By
         linked_via_assessment_reviewer: Assessments - Reviewer
+        record_type: Record Type
+        title: Title
+        identifier: Identifier
       ratings_list:
         rating: Rating
         score: Score
@@ -1432,3 +1468,35 @@ en:
       messages:
         created: Custom Report Template created
         updated: Custom Report Template updated
+
+  oai_config:
+    title: OAI-PMH Settings
+    title_repo_section: Per Repository OAI-PMH Settings
+    general_section: General Settings
+    repo_set_section: Repository Set
+    sponsor_set_section: Sponsor Set
+    repo_set_desc: In addition to sets based on level of description, you can define an OAI Set based on repositories.
+    sponsor_set_desc: In addition to sets based on level of description, you can define an OAI Set based on sponsor names.
+    oai_record_prefix: OAI Record Prefix
+    oai_admin_email: OAI Admin Email
+    oai_repository_name: OAI Repository Name
+    repo_set_name: Repository Set Name
+    repo_set_codes: Repositories in Set
+    repo_set_description: Repository Set Description
+    sponsor_set_name: Sponsor Set Name
+    sponsor_set_names: Sponsor Names
+    sponsor_set_description: Sponsor Set Description
+    oai_leave_repo_form: These options affect OAI-PMH for this repository only. Click below to view/edit global OAI options. This will leave current form without saving changes.
+    _frontend:
+      section:
+        basic_information: General Settings
+      action:
+        create: Update OAI-PMH Settings
+        updated: OAI-PMH settings successfully updated!
+    _sidebar:
+      repo_set_section:
+        _plural: Repository Sets
+      sponsor_set_section:
+        _plural: Sponsor Sets
+      repo_settings:
+        _plural: Per Repository OAI-PMH Settings

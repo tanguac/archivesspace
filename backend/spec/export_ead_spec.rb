@@ -10,11 +10,12 @@ describe "EAD export mappings" do
 
   #######################################################################
   # FIXTURES
+  #######################################################################
 
   def load_export_fixtures
     @agents = {}
     5.times {
-      a = create([:json_agent_person, :json_agent_corporate_entity, :json_agent_family].sample)
+      a = create([:json_agent_person, :json_agent_corporate_entity, :json_agent_family].sample, :publish => true)
       @agents[a.uri] = a
     }
 
@@ -83,8 +84,9 @@ describe "EAD export mappings" do
                             })
 
 
-    resource = create(:json_resource,  :linked_agents => build_linked_agents(@agents),
-                      :notes => build_archival_object_notes(10) + [@mixed_subnotes_tracer, @another_note_tracer],
+    resource = create(:json_resource,
+                      :linked_agents => build_linked_agents(@agents),
+                      :notes => build_archival_object_notes(30) + [@mixed_subnotes_tracer, @another_note_tracer],
                       :subjects => @subjects.map{|ref, s| {:ref => ref}},
                       :instances => instances,
                       :finding_aid_status => %w(completed in_progress under_revision unprocessed).sample,
@@ -95,6 +97,21 @@ describe "EAD export mappings" do
 
     @resource = JSONModel(:resource).find(resource.id, 'resolve[]' => 'top_container')
 
+    AppConfig[:arks_enabled] = true
+    ark_resource = create(:json_resource,
+                      :linked_agents => build_linked_agents(@agents),
+                      :notes => build_archival_object_notes(30) + [@mixed_subnotes_tracer, @another_note_tracer],
+                      :subjects => @subjects.map{|ref, s| {:ref => ref}},
+                      :instances => instances,
+                      :finding_aid_status => %w(completed in_progress under_revision unprocessed).sample,
+                      :finding_aid_filing_title => "this is a filing title",
+                      :finding_aid_series_statement => "here is the series statement",
+                      :publish => true,
+                      )
+
+    @resource_with_ark = JSONModel(:resource).find(ark_resource.id, 'resolve[]' => 'top_container')
+    AppConfig[:arks_enabled] = true
+
     @archival_objects = {}
 
     10.times {
@@ -103,6 +120,8 @@ describe "EAD export mappings" do
                  :parent => parent ? {:ref => parent} : nil,
                  :notes => build_archival_object_notes(5),
                  :linked_agents => build_linked_agents(@agents),
+                 :lang_materials => [build(:json_lang_material),
+                                     build(:json_lang_material)],
                  :instances => [build(:json_instance_digital),
                                 build(:json_instance,
                                       :sub_container => build(:json_sub_container,
@@ -141,16 +160,16 @@ describe "EAD export mappings" do
     val = nil
 
     if data
-      doc.should have_node(path)
+      expect(doc).to have_node(path)
       if trib.nil?
-        node.should have_inner_text(data)
+        expect(node).to have_inner_text(data)
       elsif trib == :markup
-        node.should have_inner_markup(data)
+        expect(node).to have_inner_markup(data)
       else
-        node.should have_attribute(trib, data)
+        expect(node).to have_attribute(trib, data)
       end
     elsif node && trib
-      node.should_not have_attribute(trib)
+      expect(node).not_to have_attribute(trib)
     end
   end
 
@@ -162,6 +181,7 @@ describe "EAD export mappings" do
     while !(note_types - notes.map {|note| note['type']}).empty? && brake < max do
       notes << build("json_note_#{['singlepart', 'multipart', 'multipart_gone_wilde', 'index', 'bibliography'].sample}".intern, {
                        :publish => true,
+                       :label => generate(:alphanumstr),
                        :persistent_id => [nil, generate(:alphanumstr)].sample
                      })
       brake += 1
@@ -211,10 +231,15 @@ describe "EAD export mappings" do
       as_test_user("admin") do
         DB.open(true) do
           load_export_fixtures
+          AppConfig[:arks_enabled] = true
           @doc = get_xml("/repositories/#{$repo_id}/resource_descriptions/#{@resource.id}.xml?include_unpublished=true&include_daos=true")
+          @doc_with_ark = get_xml("/repositories/#{$repo_id}/resource_descriptions/#{@resource_with_ark.id}.xml?include_unpublished=true&include_daos=true")
 
           @doc_unpub = get_xml("/repositories/#{$repo_id}/resource_descriptions/#{@resource.id}.xml?include_daos=true")
 
+          AppConfig[:arks_enabled] = false
+          @doc_ark_disabled = get_xml("/repositories/#{$repo_id}/resource_descriptions/#{@resource.id}.xml?include_unpublished=true&include_daos=true")
+          AppConfig[:arks_enabled] = true
 
           @doc_nsless = Nokogiri::XML::Document.parse(@doc.to_xml)
           @doc_nsless.remove_namespaces!
@@ -223,13 +248,13 @@ describe "EAD export mappings" do
       end
     end
 
-    @doc.errors.length.should == 0
+    expect(@doc.errors.length).to eq(0)
 
     # if the word Nokogiri appears in the XML file, we'll assume something
     # has gone wrong
-    @doc.to_xml.should_not include("Nokogiri")
-    @doc.to_xml.should_not include("#&amp;")
-    @doc.to_xml.should_not include("ASPACE EXPORT ERROR")
+    expect(@doc.to_xml).not_to include("Nokogiri")
+    expect(@doc.to_xml).not_to include("#&amp;")
+    expect(@doc.to_xml).not_to include("ASPACE EXPORT ERROR")
   end
 
 
@@ -240,7 +265,7 @@ describe "EAD export mappings" do
     it "resolves all required fields for the EAD model" do
       missing_fields = (EADModel::RESOLVE - IndexerCommonConfig.resolved_attributes)
 
-      missing_fields.should eq([])
+      expect(missing_fields).to eq([])
     end
   end
 
@@ -268,12 +293,33 @@ describe "EAD export mappings" do
     end
 
 
-    it "maps {archival_object}.language to {desc_path}/did/langmaterial/language" do
-      data = object.language ? translate('enumerations.language_iso639_2', object.language) : nil
-      code = object.language
+    it "maps {archival_object}.lang_materials['language_and_script'] to {desc_path}/did/langmaterial/language" do
 
-      mt(data, "#{desc_path}/did/langmaterial/language")
-      mt(code, "#{desc_path}/did/langmaterial/language", 'langcode')
+      language = object.lang_materials[0]['language_and_script']['language']
+      script = object.lang_materials[0]['language_and_script']['script']
+
+      mt(translate('enumerations.language_iso639_2', language), "#{desc_path}/did/langmaterial/language")
+      mt(language, "#{desc_path}/did/langmaterial/language", 'langcode')
+      mt(script, "#{desc_path}/did/langmaterial/language", 'scriptcode')
+    end
+
+
+    it "maps {archival_object}.lang_materials['notes'] to {desc_path}/did/langmaterial if present" do
+
+      language_notes = object.lang_materials << build(:json_lang_material_with_note)
+
+      language_notes.select {|n| n['type'] == 'langmaterial'}.each_with_index do |note, i|
+        content = note_content(note)
+        path = "#{desc_path}/did/langmaterial[text()='#{content}']"
+        if note['persistent_id']
+          mt("aspace_" + note['persistent_id'], path, "id")
+        else
+          mt(nil, path, "id")
+        end
+      end
+
+      language_notes.pop
+      
     end
 
 
@@ -365,7 +411,7 @@ describe "EAD export mappings" do
           mt(content, "./#{path}/p/text()[contains( '#{content}')]")
 
           note['items'].each_with_index do |item, i|
-            index_item_type_map.keys.should include(item['type'])
+            expect(index_item_type_map.keys).to include(item['type'])
             item_path = "#{full_path}/indexentry[#{i+1}]"
             mt(item['value'], "#{item_path}/#{index_item_type_map[item['type']]}")
             mt(item['reference'], "#{item_path}/ref", 'target')
@@ -595,16 +641,15 @@ describe "EAD export mappings" do
 
       it "maps notes of type 'dimensions' to did/physdesc/dimensions" do
         notes.select {|n| n['type'] == 'dimensions'}.each_with_index do |note, i|
-          path = "#{desc_path}/did/physdesc[dimensions][#{i+1}]/dimensions"
-          mt(note_content(note).gsub("<p>",'').gsub("</p>", ""), path, :markup)
-          if note['persistent_id']
-            mt("aspace_" + note['persistent_id'], path, "id")
-          else
-            mt(nil, path, "id")
-          end
+          id = "aspace_" + note['persistent_id']
+          content = note_content(note).gsub("<p>",'').gsub("</p>", "")
+          path = "did/physdesc[not(@altrender)][dimensions][#{i+1}]/dimensions"
+          path += id ? "[@id='#{id}']" : "[p[contains(text(), #{content})]]"
+          full_path = "#{desc_path}/#{path}"
+          mt(content, full_path, :markup)
+          mt(note['label'], full_path, "label") if note['label']
         end
       end
-
 
       it "maps notes of type 'physdesc' to did/physdesc" do
         notes.select {|n| n['type'] == 'physdesc'}.each do |note|
@@ -615,6 +660,8 @@ describe "EAD export mappings" do
           else
             mt(nil, path, "id")
           end
+
+          mt(note['label'], path, "label") if note['label']
         end
       end
 
@@ -660,15 +707,16 @@ describe "EAD export mappings" do
 
       it "maps notes of type 'physfacet' to did/physdesc/physfacet" do
         notes.select {|n| n['type'] == 'physfacet'}.each_with_index do |note, i|
-          path = "#{desc_path}/did/physdesc[physfacet][#{i}]/physfacet"
-          mt(note_content(note), path)
-          if !note['persistent_id'].nil?
-            mt("aspace_" + note['persistent_id'], path, "id")
-          else
-            mt(nil, path, "id")
-          end
+          id = "aspace_" + note['persistent_id']
+          content = note_content(note)
+          path = "did/physdesc[not(@altrender)][physfacet][#{i+1}]/physfacet"
+          path += id ? "[@id='#{id}']" : "[p[contains(text(), #{content})]]"
+          full_path = "#{desc_path}/#{path}"
+          mt(content, full_path)
+          mt(note['label'], full_path, "label") if note['label']
         end
       end
+
     end
 
 
@@ -700,7 +748,7 @@ describe "EAD export mappings" do
           # https://archivesspace.atlassian.net/browse/AR-985?focusedCommentId=17531&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-17531
           if link_role == 'creator'
             path = "#{desc_path}/controlaccess/#{node_name}[contains(text(), '#{agent.names[0]['sort_name']}')]"
-            doc.should_not have_node(path)
+            expect(doc).not_to have_node(path)
           end
 
           next unless %w(source subject).include?(link_role)
@@ -745,7 +793,7 @@ describe "EAD export mappings" do
                       end
 
           path = "#{desc_path}/did/origination/#{node_name}[contains(text(), '#{agent.names[0]['sort_name']}')]"
-          doc.should have_node(path)
+          expect(doc).to have_node(path)
         end
       end
 
@@ -793,7 +841,9 @@ describe "EAD export mappings" do
     end
 
     it "maps resource.ead_location to eadid/@url" do
-      mt(@resource.ead_location, "eadheader/eadid", 'url')
+      if !AppConfig[:arks_enabled]
+        mt(@resource.ead_location, "eadheader/eadid", 'url')
+      end
     end
 
     it "maps resource.ead_id to eadid" do
@@ -908,8 +958,8 @@ describe "EAD export mappings" do
       mt(Regexp.new(date_regex), "//profiledesc/creation/date")
     end
 
-    it "maps resource.finding_aid_language to profiledesc/langusage" do
-      mt(@resource.finding_aid_language, "eadheader/profiledesc/langusage")
+    it "maps resource.finding_aid_language_note to profiledesc/langusage" do
+      mt(@resource.finding_aid_language_note, "eadheader/profiledesc/langusage")
     end
 
     it "maps resource.finding_aid_description_rules to profiledesc/descrules" do
@@ -969,8 +1019,30 @@ describe "EAD export mappings" do
         mt(sort_name, path_2)
       end
     end
+
+    # ANW-777
+    it "capitalizes instances of agent role 'creator' that are mapped to origination/@label" do
+      origination_labels = doc.xpath("//origination/@label")
+
+      origination_labels.each do |origination_label|
+        next unless origination_label.content == 'creator'
+        expected_label = origination_label.content.capitalize
+        expect(origination_label.content).to eq(expected_label)
+      end
+    end
   end
 
+  describe "ARK URLs" do
+    it "maps ARK URL to eadid/@url if ARK URLs are enabled" do
+      expect(@doc_with_ark.to_s).to match(/<eadid.*url=\"http.*\/ark:/)
+    end
+    it "does not map ARK URL to eadid/@url if ARK URLs are disabled" do
+      expect(@doc_ark_disabled.to_s).to_not match(/<eadid.*url=\"http.*\/ark:/)
+    end
+    it "maps resource.ead_location to eadid/@url if ARK URLs are disabled" do
+      expect(@doc_ark_disabled.to_s).to match(/<eadid.*url=\"#{@resource.ead_location}/)
+    end
+  end
 
   describe "How digital_objects are mapped to <dao> nodes >> " do
     let(:digital_objects) { @digital_objects.values }
@@ -1049,10 +1121,10 @@ describe "EAD export mappings" do
           publish = fv['publish']
 
           if publish
-            @doc_unpub.should have_node(basepath + "[@xlink:href='#{file_uri}']")
-            @doc.should have_node(basepath + "[@xlink:audience='external']")
+            expect(@doc_unpub).to have_node(basepath + "[@xlink:href='#{file_uri}']")
+            expect(@doc).to have_node(basepath + "[@xlink:audience='external']")
           else
-            @doc_unpub.should_not have_node(basepath + "[@xlink:href='#{file_uri}']")
+            expect(@doc_unpub).not_to have_node(basepath + "[@xlink:href='#{file_uri}']")
           end
         end
       end
@@ -1080,11 +1152,11 @@ describe "EAD export mappings" do
           publish = fv['publish']
 
           if publish
-            @doc.should have_node(basepath + "[@xlink:href='#{file_uri}']")
-            @doc.should have_node(basepath + "[@xlink:audience='external']")
+            expect(@doc).to have_node(basepath + "[@xlink:href='#{file_uri}']")
+            expect(@doc).to have_node(basepath + "[@xlink:audience='external']")
           else
-            @doc.should have_node(basepath + "[@xlink:href='#{file_uri}']")
-            @doc.should have_node(basepath + "[@xlink:audience='internal']")
+            expect(@doc).to have_node(basepath + "[@xlink:href='#{file_uri}']")
+            expect(@doc).to have_node(basepath + "[@xlink:audience='internal']")
           end
         end
       end
@@ -1101,7 +1173,7 @@ describe "EAD export mappings" do
       let(:nspath) { "//xmlns:c[@id='#{ref_id}']"}
 
       it "maps archival_object.ref_id to //c[@id]" do
-        doc.should have_node(path)
+        expect(doc).to have_node(path)
       end
 
       it_behaves_like "archival object desc mappings" do
@@ -1138,47 +1210,85 @@ describe "EAD export mappings" do
   describe "Testing EAD Serializer mixed content behavior" do
 
     let(:note_with_p) { "<p>A NOTE!</p>" }
+    let(:note_with_archref) {"<archref audience='external'/>"}
+    let(:note_with_bibref) {"<bibref audience='internal'/>"}
+    let(:note_with_extptr) {"<extptr linktype='simple' entityref='entref' title='title' show='embed'/>"}
+    let(:note_with_extptrloc) {"<extptrloc href='http://www.example.com'/>"}
+    let(:note_with_extrefloc) {"<extrefloc href='http://www.example.com'/>"}
+    let(:note_with_linkgrp) {"<linkgrp linktype='extended'><extrefloc href='http://www.someserver.edu/findaids/3270.xml'><archref>archref</archref></extrefloc><extrefloc href='http://www.someserver.edu/findaids/9248.xml'><archref>archref</archref></extrefloc></linkgrp>"}
+    let(:note_with_ptr) {"<ptr linktype='simple' actuate='onrequest' show='replace' target='mss1982-062_add2'/>"}
+    let(:note_with_ptrloc) {"<ptrloc audience='external'/>"}
+    let(:note_with_ref) {"<ref linktype='simple' target='NonC:21-2' show='replace' actuate='onrequest'>"}
+    let(:note_with_refloc) {"<refloc target='a9'></refloc>"}
+    let(:note_with_resource) {"<resource linktype='resource' label='start'/>"}
+    let(:note_with_title) {"<title render='italic'/>"}
+    let(:note_with_extref) { "<extref linktype='simple' entityref='site' title='title' actuate='onrequest' show='new' href='http://duckduckgo.com'>A Good Search Engine</p>" }
     let(:note_with_linebreaks) { "Something, something,\n\nsomething." }
     let(:note_with_linebreaks_and_good_mixed_content) { "Something, something,\n\n<bioghist>something.</bioghist>\n\n" }
     let(:note_with_linebreaks_and_evil_mixed_content) { "Something, something,\n\n<bioghist>something.\n\n</bioghist>\n\n" }
     let(:note_with_linebreaks_but_something_xml_nazis_hate) { "Something, something,\n\n<prefercite>XML & How to Live it!</prefercite>\n\n" }
     let(:note_with_linebreaks_and_xml_namespaces) { "Something, something,\n\n<prefercite xlink:foo='one' ns2:bar='two' >XML, you so crazy!</prefercite>\n\n" }
     let(:note_with_smart_quotes) {"This note has “smart quotes” and ‘smart apostrophes’ from MSWord."}
+    let(:note_with_different_amps) {"The materials are arrange in folders. Mumford&Sons. Mumford & Sons. They are cool&hip. &lt;p&gt;foo, 2 & 2.&lt;/p&gt;"}
     let(:serializer) { EADSerializer.new }
 
     it "can strip <p> tags from content when disallowed" do
-      serializer.strip_p(note_with_p).should eq("A NOTE!")
+      expect(serializer.strip_p(note_with_p)).to eq("A NOTE!")
+    end
+
+    it "adds xlink prefix to attributes in mixed content" do
+      expect(serializer.add_xlink_prefix(note_with_extref)).to eq("<extref xlink:linktype='simple' xlink:entityref='site' xlink:title='title' xlink:actuate='onrequest' xlink:show='new' xlink:href='http://duckduckgo.com'>A Good Search Engine</p>")
+      expect(serializer.add_xlink_prefix(note_with_archref)).to eq("<archref audience='external'/>")
+      expect(serializer.add_xlink_prefix(note_with_bibref)).to eq("<bibref audience='internal'/>")
+      expect(serializer.add_xlink_prefix(note_with_extptr)).to eq("<extptr xlink:linktype='simple' xlink:entityref='entref' xlink:title='title' xlink:show='embed'/>")
+      expect(serializer.add_xlink_prefix(note_with_extptrloc)).to eq("<extptrloc xlink:href='http://www.example.com'/>")
+      expect(serializer.add_xlink_prefix(note_with_extrefloc)).to eq("<extrefloc xlink:href='http://www.example.com'/>")
+      expect(serializer.add_xlink_prefix(note_with_linkgrp)).to eq("<linkgrp xlink:linktype='extended'><extrefloc xlink:href='http://www.someserver.edu/findaids/3270.xml'><archref>archref</archref></extrefloc><extrefloc xlink:href='http://www.someserver.edu/findaids/9248.xml'><archref>archref</archref></extrefloc></linkgrp>")
+      expect(serializer.add_xlink_prefix(note_with_ptr)).to eq("<ptr xlink:linktype='simple' xlink:actuate='onrequest' xlink:show='replace' xlink:target='mss1982-062_add2'/>")
+      expect(serializer.add_xlink_prefix(note_with_ptrloc)).to eq("<ptrloc audience='external'/>")
+      expect(serializer.add_xlink_prefix(note_with_ref)).to eq("<ref xlink:linktype='simple' xlink:target='NonC:21-2' xlink:show='replace' xlink:actuate='onrequest'>")
+      expect(serializer.add_xlink_prefix(note_with_refloc)).to eq("<refloc xlink:target='a9'></refloc>")
+      expect(serializer.add_xlink_prefix(note_with_resource)).to eq("<resource xlink:linktype='resource' label='start'/>")
+      expect(serializer.add_xlink_prefix(note_with_title)).to eq("<title render='italic'/>")
+    end
+
+    it "does not add xlink prefix when mixed content has no attributes" do
+      expect(serializer.add_xlink_prefix(note_with_p)).to eq(note_with_p)
     end
 
     it "can leave <p> tags in content" do
-      serializer.handle_linebreaks(note_with_p).should eq(note_with_p)
+      expect(serializer.handle_linebreaks(note_with_p)).to eq(note_with_p)
     end
 
     it "will add <p> tags to content with linebreaks" do
-      serializer.handle_linebreaks(note_with_linebreaks).should eq("<p>Something, something,</p><p>something.</p>")
+      expect(serializer.handle_linebreaks(note_with_linebreaks)).to eq("<p>Something, something,</p><p>something.</p>")
     end
 
     it "will add <p> tags to content with linebreaks and mixed content" do
-      serializer.handle_linebreaks(note_with_linebreaks_and_good_mixed_content).should eq("<p>Something, something,</p><p><bioghist>something.</bioghist></p>")
+      expect(serializer.handle_linebreaks(note_with_linebreaks_and_good_mixed_content)).to eq("<p>Something, something,</p><p><bioghist>something.</bioghist></p>")
     end
 
     it "will return original content when linebreaks and mixed content produce invalid markup" do
-      serializer.handle_linebreaks(note_with_linebreaks_and_evil_mixed_content).should eq(note_with_linebreaks_and_evil_mixed_content)
+      expect(serializer.handle_linebreaks(note_with_linebreaks_and_evil_mixed_content)).to eq(note_with_linebreaks_and_evil_mixed_content)
     end
 
     it "will add <p> tags to content with linebreaks and mixed content even if those evil &'s are present in the text" do
-      serializer.handle_linebreaks(note_with_linebreaks_but_something_xml_nazis_hate).should eq("<p>Something, something,</p><p><prefercite>XML &amp; How to Live it!</prefercite></p>")
+      expect(serializer.handle_linebreaks(note_with_linebreaks_but_something_xml_nazis_hate)).to eq("<p>Something, something,</p><p><prefercite>XML &amp; How to Live it!</prefercite></p>")
     end
 
     it "will add <p> tags to content with linebreaks and mixed content even there are weird namespace prefixes" do
-      serializer.handle_linebreaks(note_with_linebreaks_and_xml_namespaces).should eq("<p>Something, something,</p><p><prefercite xlink:foo='one' ns2:bar='two' >XML, you so crazy!</prefercite></p>")
+      expect(serializer.handle_linebreaks(note_with_linebreaks_and_xml_namespaces)).to eq("<p>Something, something,</p><p><prefercite xlink:foo='one' ns2:bar='two' >XML, you so crazy!</prefercite></p>")
+    end
+
+    it "will correctly handle content with & as punctuation as well as & as pre-escaped characters" do
+      expect(serializer.handle_linebreaks(note_with_different_amps)).to eq("<p>The materials are arrange in folders. Mumford&amp;Sons. Mumford &amp; Sons. They are cool&amp;hip. &lt;p&gt;foo, 2 &amp; 2.&lt;/p&gt;</p>")
     end
 
     it "will replace MSWord-style smart quotes with ASCII characters" do
-      serializer.remove_smart_quotes(note_with_smart_quotes).should eq("This note has \"smart quotes\" and \'smart apostrophes\' from MSWord.")
+      expect(serializer.remove_smart_quotes(note_with_smart_quotes)).to eq("This note has \"smart quotes\" and \'smart apostrophes\' from MSWord.")
     end
-
   end
+
 
 
   describe "Test unpublished record EAD exports" do
@@ -1211,7 +1321,19 @@ describe "EAD export mappings" do
                                       :linked_agents => [{
                                         :ref => @unpublished_agent.uri,
                                         :role => 'creator'
-                                      }])
+                                      }],
+                                      :revision_statements => [
+                                        {
+                                          :date => 'some date',
+                                          :description => 'unpublished revision statement',
+                                          :publish => false
+                                        },
+                                        {
+                                          :date => 'some date',
+                                          :description => 'published revision statement',
+                                          :publish => true
+                                        }
+                                      ])
 
         @unpublished_resource_jsonmodel = JSONModel(:resource).find(unpublished_resource.id)
 
@@ -1229,39 +1351,67 @@ describe "EAD export mappings" do
     }
 
     it "does not set <ead> attribute audience 'internal' when resource is published" do
-      @doc_nsless.at_xpath('//ead').should_not have_attribute('audience', 'internal')
+      expect(@doc_nsless.at_xpath('//ead')).not_to have_attribute('audience', 'internal')
     end
 
     it "sets <ead> attribute audience 'internal' when resource is not published" do
-      @xml_including_unpublished.at_xpath('//ead').should have_attribute('audience', 'internal')
-      @xml_not_including_unpublished.at_xpath('//ead').should have_attribute('audience', 'internal')
+      expect(@xml_including_unpublished.at_xpath('//ead')).to have_attribute('audience', 'internal')
+      expect(@xml_not_including_unpublished.at_xpath('//ead')).to have_attribute('audience', 'internal')
     end
 
     it "includes unpublished items when include_unpublished option is false" do
-      @xml_including_unpublished.xpath('//c').length.should eq(2)
-      @xml_including_unpublished.xpath("//c[@id='aspace_#{@published_archival_object.ref_id}'][not(@audience='internal')]").length.should eq(1)
-      @xml_including_unpublished.xpath("//c[@id='aspace_#{@unpublished_archival_object.ref_id}'][@audience='internal']").length.should eq(1)
+      expect(@xml_including_unpublished.xpath('//c').length).to eq(2)
+      expect(@xml_including_unpublished.xpath("//c[@id='aspace_#{@published_archival_object.ref_id}'][not(@audience='internal')]").length).to eq(1)
+      expect(@xml_including_unpublished.xpath("//c[@id='aspace_#{@unpublished_archival_object.ref_id}'][@audience='internal']").length).to eq(1)
     end
 
     it "does not include unpublished items when include_unpublished option is false" do
       items = @xml_not_including_unpublished.xpath('//c')
-      items.length.should eq(1)
+      expect(items.length).to eq(1)
 
       item = items.first
-      item.should_not have_attribute('audience', 'internal')
+      expect(item).not_to have_attribute('audience', 'internal')
     end
 
     it "include the unpublished agent with audience internal when include_unpublished is true" do
       creators = @xml_including_unpublished.xpath('//origination')
-      creators.length.should eq(1)
+      expect(creators.length).to eq(1)
       creator = creators.first
-      creator.should have_attribute('label', 'creator')
-      creator.should have_attribute('audience', 'internal')
+      expect(creator).to have_attribute('label', 'Creator')
+      expect(creator).to have_attribute('audience', 'internal')
     end
 
     it "does not include the unpublished agent with audience internal when include_unpublished is false" do
       creators = @xml_not_including_unpublished.xpath('//origination')
-      creators.length.should eq(0)
+      expect(creators.length).to eq(0)
+    end
+
+    it "include the unpublished revision statement with audience internal when include_unpublished is true" do
+      revision_statements = @xml_including_unpublished.xpath('//revisiondesc/change')
+      expect(revision_statements.length).to eq(2)
+      unpublished = revision_statements.first
+      expect(unpublished).to have_attribute('audience', 'internal')
+      items = @xml_including_unpublished.xpath('//revisiondesc/change/item')
+      expect(items.length).to eq(2)
+      expect(items.first).to have_inner_text('unpublished revision statement')
+    end
+
+    it "does not set <change> attribute audience 'internal' when revision statement is published" do
+      revision_statements = @xml_including_unpublished.xpath('//revisiondesc/change')
+      expect(revision_statements.length).to eq(2)
+      published = revision_statements[1]
+      expect(published).not_to have_attribute('audience', 'internal')
+      items = @xml_including_unpublished.xpath('//revisiondesc/change/item')
+      expect(items.length).to eq(2)
+      expect(items[1]).to have_inner_text('published revision statement')
+    end
+
+    it "includes only the published revision statement when include_unpublished is false" do
+      revision_statements = @xml_not_including_unpublished.xpath('//revisiondesc/change')
+      expect(revision_statements.length).to eq(1)
+      items = @xml_not_including_unpublished.xpath('//revisiondesc/change/item')
+      expect(items.length).to eq(1)
+      expect(items.first).to have_inner_text('published revision statement')
     end
   end
 
@@ -1327,9 +1477,9 @@ describe "EAD export mappings" do
     }
 
     it "excludes suppressed items" do
-      @xml.xpath('//c').length.should eq(2)
-      @xml.xpath("//c[@id='aspace_#{@unsuppressed_series.ref_id}']").length.should eq(1)
-      @xml.xpath("//c[@id='aspace_#{@unsuppressed_series_unsuppressed_child.ref_id}']").length.should eq(1)
+      expect(@xml.xpath('//c').length).to eq(2)
+      expect(@xml.xpath("//c[@id='aspace_#{@unsuppressed_series.ref_id}']").length).to eq(1)
+      expect(@xml.xpath("//c[@id='aspace_#{@unsuppressed_series_unsuppressed_child.ref_id}']").length).to eq(1)
     end
   end
 end

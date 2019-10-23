@@ -3,9 +3,12 @@ require "uri"
 require "json"
 require "digest"
 require "rspec"
+require 'rspec/retry'
 require 'test_utils'
 require 'config/config-distribution'
 require 'securerandom'
+require 'axe/rspec'
+require 'nokogiri'
 
 require_relative '../../indexer/app/lib/realtime_indexer'
 require_relative '../../indexer/app/lib/periodic_indexer'
@@ -82,6 +85,12 @@ def setup_test_data
   end
   create(:resource, title: "Resource for Phrase Search", publish: true)
   create(:resource, title: "Search as Phrase Resource", publish: true)
+
+  resource_with_scope = create(:resource_with_scope, title: "Resource with scope note", publish: true)
+  aos = (0..5).map do
+    create(:archival_object,
+           resource: { 'ref' => resource_with_scope.uri }, publish: true)
+  end
   run_all_indexers
 end
 
@@ -89,6 +98,12 @@ RSpec.configure do |config|
 
   config.include FactoryBot::Syntax::Methods
   config.include BackendClientMethods
+  
+  # show retry status in spec process
+  config.verbose_retry = true
+  # Try thrice (retry twice)
+  config.default_retry_count = 3
+
 
   [:controller, :view, :request].each do |type|
     config.include ::Rails::Controller::Testing::TestProcess, :type => type
@@ -117,7 +132,7 @@ RSpec.configure do |config|
     end
     # For some reason we have to manually shutdown mizuno for the test suite to
     # quit.
-    Rack::Handler.get('mizuno').instance_variable_get(:@server).stop
+    Rack::Handler.get('mizuno').instance_variable_get(:@server) ? Rack::Handler.get('mizuno').instance_variable_get(:@server).stop : next
   end
 
 end

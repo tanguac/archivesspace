@@ -11,22 +11,23 @@ class AccessionsController < ApplicationController
 
 
   def index
-    respond_to do |format| 
-      format.html {   
+    respond_to do |format|
+      format.html {
         @search_data = Search.for_type(session[:repo_id], "accession", params_for_backend_search.merge({"facet[]" => SearchResultData.ACCESSION_FACETS}))
       }
-      format.csv { 
+      format.csv {
         search_params = params_for_backend_search.merge({"facet[]" => SearchResultData.ACCESSION_FACETS})
-        search_params["type[]"] = "accession" 
+        search_params["type[]"] = "accession"
         uri = "/repositories/#{session[:repo_id]}/search"
         csv_response( uri, search_params )
-      }  
-    end 
+      }
+    end
   end
 
 
   def show
     @accession = fetch_resolved(params[:id])
+    @accession['accession_date'] = I18n.t('accession.accession_date_unknown') if @accession['accession_date'] == "9999-12-31"
 
     flash[:info] = I18n.t("accession._frontend.messages.suppressed_info", JSONModelI18nWrapper.new(:accession => @accession)) if @accession.suppressed
   end
@@ -90,6 +91,7 @@ class AccessionsController < ApplicationController
 
   def edit
     @accession = fetch_resolved(params[:id])
+    @accession['accession_date'] = '' if @accession['accession_date'] == "9999-12-31"
 
     if @accession.suppressed
       redirect_to(:controller => :accessions, :action => :show, :id => params[:id])
@@ -113,6 +115,12 @@ class AccessionsController < ApplicationController
                 :on_invalid => ->(){ render action: "new" },
                 :on_valid => ->(id){
                     flash[:success] = I18n.t("accession._frontend.messages.created", JSONModelI18nWrapper.new(:accession => @accession))
+                     if @accession["is_slug_auto"] == false &&
+                        @accession["slug"] == nil &&
+                        params["accession"] &&
+                        params["accession"]["is_slug_auto"] == "1"
+                       flash[:warning] = I18n.t("slug.autogen_disabled")
+                     end
                     redirect_to(:controller => :accessions,
                                 :action => :edit,
                                 :id => id) })
@@ -127,6 +135,13 @@ class AccessionsController < ApplicationController
                 },
                 :on_valid => ->(id){
                   flash[:success] = I18n.t("accession._frontend.messages.updated", JSONModelI18nWrapper.new(:accession => @accession))
+                  if @accession["is_slug_auto"] == false &&
+                     @accession["slug"] == nil &&
+                     params["accession"] &&
+                     params["accession"]["is_slug_auto"] == "1"
+                    flash[:warning] = I18n.t("slug.autogen_disabled")
+                  end
+
                   redirect_to :controller => :accessions, :action => :edit, :id => id
                 })
   end

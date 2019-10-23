@@ -1,6 +1,7 @@
 require_relative '../lib/realtime_indexing'
 
 require_relative 'ASModel_crud'
+require_relative 'ASModel_change_tracking'
 require_relative 'ASModel_transfers'
 require_relative 'ASModel_database_mapping'
 require_relative 'ASModel_sequel'
@@ -28,6 +29,7 @@ module ASModel
 
     base.extend(JSONModel)
 
+    base.include(ChangeTracking)
     base.include(CRUD)
     base.include(RepositoryTransfers)
     base.include(DatabaseMapping)
@@ -36,7 +38,16 @@ module ASModel
     base.include(ObjectGraph)
     base.include(Relationships)
 
+    base.extend(ClassMethods)
+
     @@all_models << base
+  end
+
+
+  module ClassMethods
+    def top_level?
+      respond_to?(:has_jsonmodel?) && has_jsonmodel? && my_jsonmodel.schema.has_key?('uri')
+    end
   end
 
 end

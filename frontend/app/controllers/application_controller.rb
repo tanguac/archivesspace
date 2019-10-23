@@ -4,7 +4,7 @@ require 'search'
 require 'zlib'
 
 class ApplicationController < ActionController::Base
-  protect_from_forgery
+  protect_from_forgery with: :exception
 
   helper :all
 
@@ -87,7 +87,7 @@ class ApplicationController < ActionController::Base
 
       instance = cleanup_params_for_schema(params[opts[:instance]], model.schema)
 
-      
+
 
       if opts[:replace] || opts[:replace].nil?
         obj.replace(instance)
@@ -133,6 +133,7 @@ class ApplicationController < ActionController::Base
       else
         id = obj.save
       end
+
       opts[:on_valid].call(id)
     rescue ConflictException
       instance_variable_set(:"@record_is_stale".intern, true)
@@ -149,7 +150,11 @@ class ApplicationController < ActionController::Base
     request = JSONModel(:merge_request).new
     request.target = {'ref' => target_uri}
     request.victims = Array.wrap(victims).map { |victim| { 'ref' => victim  } }
-
+    if params[:id]
+      id = params[:id]
+    else
+      id = target_uri.split('/')[-1]
+    end
     begin
       request.save(:record_type => merge_type)
       flash[:success] = I18n.t("#{merge_type}._frontend.messages.merged")
@@ -158,13 +163,13 @@ class ApplicationController < ActionController::Base
       redirect_to(resolver.view_uri)
     rescue ValidationException => e
       flash[:error] = e.errors.to_s
-      redirect_to({:action => :show, :id => params[:id]}.merge(extra_params))
+      redirect_to({:action => :show, :id => id}.merge(extra_params))
     rescue ConflictException => e
       flash[:error] = I18n.t("errors.merge_conflict", :message => e.conflicts)
-      redirect_to({:action => :show, :id => params[:id]}.merge(extra_params))
+      redirect_to({:action => :show, :id => id}.merge(extra_params))
     rescue RecordNotFound => e
       flash[:error] = I18n.t("errors.error_404")
-      redirect_to({:action => :show, :id => params[:id]}.merge(extra_params))
+      redirect_to({:action => :show, :id => id}.merge(extra_params))
     end
   end
 
@@ -197,7 +202,7 @@ class ApplicationController < ActionController::Base
   def find_opts
     {
       "resolve[]" => ["subjects", "related_resources", "linked_agents",
-                      "revision_statements", 
+                      "revision_statements",
                       "container_locations", "digital_object", "classifications",
                       "related_agents", "resource", "parent", "creator",
                       "linked_instances", "linked_records", "related_accessions",
@@ -221,11 +226,11 @@ class ApplicationController < ActionController::Base
   def user_needs_to_be_a_user
     unauthorised_access if not session['user']
   end
-  
+
   def user_needs_to_be_a_user_manager
     unauthorised_access if not user_can? 'manage_users'
   end
-  
+
   def user_needs_to_be_a_user_manager_or_new_user
     unauthorised_access if session['user'] and not user_can? 'manage_users'
   end
@@ -242,7 +247,7 @@ class ApplicationController < ActionController::Base
         if required[key].length > obj[key].length
           min_items << {"name" => key, "num" => required[key].length}
         elsif required[key].length === obj[key].length
-          
+
           required[key].zip(obj[key]).each_with_index do |(required_a, obj_a), index|
             required_a.keys.each do |nested_key|
               if required_a[nested_key].is_a? Array and obj_a[nested_key].is_a? Array
@@ -284,7 +289,7 @@ class ApplicationController < ActionController::Base
     if required_a[nested_key].length > obj_a[nested_key].length
       min_items << {"name" => "#{key}/#{index}/#{nested_key}", "num" => required_a[nested_key].length}
     elsif required_a[nested_key].length === obj_a[nested_key].length
-                  
+
       required_a[nested_key].zip(obj_a[nested_key]).each_with_index do |(required_a2, obj_a2), index2|
         required_a2.keys.each do |nested_key2|
           if required_a2[nested_key2].is_a? Hash
@@ -327,9 +332,21 @@ class ApplicationController < ActionController::Base
   end
 
 
-  def self.session_repo(session, repo)
+  # ANW-617: To generate public URLs correctly in the show pages for various entities, we need access to the repository slug.
+  # Since the JSON objects for these does not have this info, we load it into the session along with other repo data when a repo is selected for convienience.
+  def self.session_repo(session, repo, repo_slug = nil)
     session[:repo] = repo
     session[:repo_id] = JSONModel(:repository).id_for(repo)
+
+    # if the slug has been passed in, we don't need to do a DB lookup.
+    # if not, we go get it so links are generated correctly after login.
+    if repo_slug
+      session[:repo_slug] = repo_slug
+    else
+      full_repo_json = JSONModel(:repository).find(session[:repo_id])
+      session[:repo_slug] = full_repo_json[:slug]
+    end
+
     self.user_preferences(session)
   end
 
@@ -594,7 +611,7 @@ class ApplicationController < ActionController::Base
   end
 
   def params_for_backend_search
-    params_for_search = params.select{|k,v| ["page", "q", "aq", "type", "sort", "exclude", "filter_term"].include?(k) and not v.blank?}
+    params_for_search = params.select{|k,v| ["page", "q", "aq", "type", "sort", "exclude", "filter_term", "fields"].include?(k) and not v.blank?}
 
     params_for_search["page"] ||= 1
 
@@ -616,6 +633,11 @@ class ApplicationController < ActionController::Base
     if params_for_search["exclude"]
       params_for_search["exclude[]"] = Array(params_for_search["exclude"]).reject{|v| v.blank?}
       params_for_search.delete("exclude")
+    end
+
+    if params_for_search["fields"]
+      params_for_search["fields[]"] = Array(params_for_search["fields"]).reject{|v| v.blank?}
+      params_for_search.delete("fields")
     end
 
     params_for_search
@@ -676,7 +698,7 @@ class ApplicationController < ActionController::Base
 
       if query["type"] == "text"
         query["comparator"] = params["top#{i}"]
-        query["empty"] = query["comparator"] == "empty" 
+        query["empty"] = query["comparator"] == "empty"
       end
 
       if query["op"] === "NOT"
@@ -691,7 +713,7 @@ class ApplicationController < ActionController::Base
 
       if query["type"] == "boolean"
         query["value"] = query["value"] == "empty" ? "empty" : query["value"] == "true"
-        query["empty"] = query["value"] == "empty" 
+        query["empty"] = query["value"] == "empty"
       end
 
       if query["type"] == "enum"

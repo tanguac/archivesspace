@@ -6,7 +6,7 @@
 <title>
   Module: ASModel::SequelHooks::BlobHack
   
-    &mdash; Documentation by YARD 0.9.12
+    &mdash; Documentation by YARD 0.9.20
   
 </title>
 
@@ -36,7 +36,7 @@
       <div id="header">
         <div id="menu">
   
-    <a href="../../_index.html">Index (B)</a> &raquo;
+    <a href="../../alpha_index.html">Index (B)</a> &raquo;
     <span class='title'><span class='object_link'><a href="../../ASModel.html" title="ASModel (module)">ASModel</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../SequelHooks.html" title="ASModel::SequelHooks (module)">SequelHooks</a></span></span>
      &raquo; 
     <span class="title">BlobHack</span>
@@ -177,16 +177,16 @@
       <pre class="lines">
 
 
-64
-65
-66
-67
-68
-69
-70</pre>
+139
+140
+141
+142
+143
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'backend/app/model/ASModel_sequel.rb', line 64</span>
+      <pre class="code"><span class="info file"># File 'backend/app/model/ASModel_sequel.rb', line 139</span>
 
 <span class='rubyid_def def kw'>def</span> <span class='rubyid_self self kw'>self</span><span class='dot token'>.</span><span class='rubyid_extended identifier id'>extended</span><span class='lparen token'>(</span><span class='rubyid_base identifier id'>base</span><span class='rparen token'>)</span>
   <span class='rubyid_blob_columns identifier id'>blob_columns</span> <span class='assign token'>=</span> <span class='rubyid_base identifier id'>base</span><span class='dot token'>.</span><span class='rubyid_db_schema identifier id'>db_schema</span><span class='dot token'>.</span><span class='rubyid_select identifier id'>select</span> <span class='lbrace token'>{</span><span class='bitor op'>|</span><span class='rubyid_column identifier id'>column</span><span class='comma token'>,</span> <span class='rubyid_defn identifier id'>defn</span><span class='bitor op'>|</span> <span class='rubyid_defn identifier id'>defn</span><span class='lbrack token'>[</span><span class='symbol val'>:type</span><span class='rbrack token'>]</span> <span class='eq op'>==</span> <span class='symbol val'>:blob</span><span class='rbrace token'>}</span><span class='dot token'>.</span><span class='rubyid_keys identifier id'>keys</span>
@@ -222,12 +222,12 @@
       <pre class="lines">
 
 
-72
-73
-74</pre>
+147
+148
+149</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'backend/app/model/ASModel_sequel.rb', line 72</span>
+      <pre class="code"><span class="info file"># File 'backend/app/model/ASModel_sequel.rb', line 147</span>
 
 <span class='rubyid_def def kw'>def</span> <span class='rubyid_blob_columns_to_fix identifier id'>blob_columns_to_fix</span>
   <span class='rubyid_@blob_columns_to_fix ivar id'>@blob_columns_to_fix</span>
@@ -243,10 +243,11 @@
 </div>
 
       <div id="footer">
-  ArchivesSpace Version v2.5.0.a Documentation Generated on Thu Aug  9 12:11:46 2018 by
+  ArchivesSpace Version v2.7.0.a Documentation Generated on Tue Oct  8 14:03:41 2019 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.12 (ruby-2.3.3).
+  0.9.20.
 </div>
+
     </div>
   </body>
 </html>

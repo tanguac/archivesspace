@@ -10,6 +10,7 @@ module Searchable
 
 
   def set_up_search(default_types = [],default_facets=[],default_search_opts={}, params={}, q='')
+    params = sanitize_params(params)
     @search = Search.new(params)
     limit = params.fetch(:limit,'')
     field = params.fetch(:field, nil)
@@ -77,6 +78,7 @@ module Searchable
   end
 
   def set_up_advanced_search(default_types = [],default_facets=[],default_search_opts={}, params={})
+    params = sanitize_params(params)
     @search = Search.new(params)
     unless @search[:limit].blank?
       default_types = @search[:limit].split(",")
@@ -172,6 +174,7 @@ module Searchable
 
 
   def get_years(params)
+    params = sanitize_params(params)
     years = {}
     from = params.fetch(:filter_from_year,'').strip
     to = params.fetch(:filter_to_year,'').strip
@@ -231,7 +234,7 @@ module Searchable
   def process_results(results, full)
     results.each do |result|
       if !result['json'].blank?
-        result['json'] = JSON.parse(result['json']) || {}
+        result['json'] = ASUtils.json_parse(result['json']) || {}
 #        Pry::ColorPrinter.pp(result['json'])
       end
       result['json']['display_string'] = full_title(result['json'])
@@ -243,7 +246,7 @@ module Searchable
       if result['_resolved_repository'].kind_of?(Hash)
         rr = result['_resolved_repository'].shift
         if !rr[1][0]['json'].blank?
-          result['_resolved_repository']['json'] = JSON.parse( rr[1][0]['json'])
+          result['_resolved_repository']['json'] = ASUtils.json_parse( rr[1][0]['json'])
         end
       end
       # A different kind of convolution
@@ -259,7 +262,7 @@ module Searchable
 #Pry::ColorPrinter.pp result['_resolved_top_container_uri_u_sstr']
         rr = result['_resolved_top_container_uri_u_sstr'].shift
         if !rr[1][0]['json'].blank?
-          result['_resolved_top_container_uri_u_sstr']['json'] = JSON.parse( rr[1][0]['json'])
+          result['_resolved_top_container_uri_u_sstr']['json'] = ASUtils.json_parse( rr[1][0]['json'])
         end
       end
     end
@@ -294,6 +297,7 @@ module Searchable
 
 
   def search_terms(params)
+    params = sanitize_params(params)
     terms = ''
     queries = params.fetch(:q, nil)
     if queries
@@ -330,6 +334,15 @@ module Searchable
     opts = {}
     default.each do |k,v|
       opts[k] = v
+    end
+    if AppConfig[:solr_params].any?
+      AppConfig[:solr_params].each do |param, value|
+        if value.respond_to? :call
+          opts[param.to_sym] = self.instance_eval(&value)
+        else
+          opts[param.to_sym] = value
+        end
+      end
     end
     opts
   end
@@ -398,4 +411,25 @@ module Searchable
     type
   end
 
+  def sanitize_params(unsanitized)
+    unsanitized.each do | k, v |
+      if v.is_a?(Array)
+        sanitized = []
+        v.each do | val |
+          sanitized << ActionController::Base.helpers.sanitize(val)
+        end
+      elsif v.is_a?(Hash)
+        sanitized = {}
+        v.each do | _key, value |
+          sanitized.merge!(_key: ActionController::Base.helpers.sanitize(value))
+        end
+      elsif v.is_a?(String)
+        sanitized = ActionController::Base.helpers.sanitize(v)
+      elsif v.is_a?(Fixnum)
+        sanitized = v
+      end
+      unsanitized[k.to_sym] = sanitized
+    end
+    return unsanitized
+  end
 end

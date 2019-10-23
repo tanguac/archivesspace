@@ -1,4 +1,5 @@
 require 'spec_helper'
+require_relative 'spec_slugs_helper'
 
 describe 'Resource model' do
 
@@ -7,9 +8,29 @@ describe 'Resource model' do
 
     resource = create_resource(opts)
 
-    Resource[resource[:id]].title.should eq(opts[:title])
+    expect(Resource[resource[:id]].title).to eq(opts[:title])
+    resource.delete
   end
 
+  it "creates an ARK name with resource" do
+    AppConfig[:arks_enabled] = true
+    opts = {:title => generate(:generic_title)}
+    resource = create_resource(opts)
+    expect(ArkName.first(:resource_id => resource.id)).to_not be_nil
+    resource.delete
+    AppConfig[:arks_enabled] = false
+  end
+
+  it "deletes ARK Name when resource is deleted" do
+    AppConfig[:arks_enabled] = true
+    opts = {:title => generate(:generic_title)}
+    resource = create_resource(opts)
+    resource_id = resource.id
+    expect(ArkName.first(:resource_id => resource_id)).to_not be_nil
+    resource.delete
+    expect(ArkName.first(:resource_id => resource_id)).to be_nil
+    AppConfig[:arks_enabled] = false
+  end
 
   it "prevents duplicate IDs " do
     opts = {:id_0 => generate(:alphanumstr)}
@@ -42,7 +63,7 @@ describe 'Resource model' do
                                          }),
                                    :repo_id => repo_id)
       end
-    }.to_not raise_error
+    }.not_to raise_error
   end
 
 
@@ -51,8 +72,8 @@ describe 'Resource model' do
 
     resource = create_resource(opts)
 
-    Resource[resource[:id]].date.length.should eq(1)
-    Resource[resource[:id]].date[0].begin.should eq(opts[:dates][0]['begin'])
+    expect(Resource[resource[:id]].date.length).to eq(1)
+    expect(Resource[resource[:id]].date[0].begin).to eq(opts[:dates][0]['begin'])
   end
 
 
@@ -83,16 +104,16 @@ describe 'Resource model' do
                                                          :top_container => {:ref => top.uri}))]}
     resource = create_resource(opts)
     res = Resource[resource[:id]]
-    res.instance.length.should eq(1)
-    res.instance[0].instance_type.should eq(opts[:instances][0]['instance_type'])
+    expect(res.instance.length).to eq(1)
+    expect(res.instance[0].instance_type).to eq(opts[:instances][0]['instance_type'])
 
     res = URIResolver.resolve_references(Resource.to_jsonmodel(resource[:id]), ['top_container'])
-    res['instances'][0]["sub_container"]['top_container']['_resolved']["type"].should eq(top["type"])
+    expect(res['instances'][0]["sub_container"]['top_container']['_resolved']["type"]).to eq(top["type"])
   end
 
 
   it "throws an error when no language is provided" do
-    opts = {:language => nil}
+    opts = {:lang_materials => [{"language_and_script" => {"language" => nil, "script" => "Latn"}}]}
 
     expect { create_resource(opts) }.to raise_error(JSONModel::ValidationException)
   end
@@ -108,7 +129,7 @@ describe 'Resource model' do
   it "allows long titles" do
     expect {
       res = create(:resource, {:repo_id => $repo_id, :title => 200.times.map { 'moo'}.join})
-    }.to_not raise_error
+    }.not_to raise_error
   end
 
 
@@ -130,7 +151,7 @@ describe 'Resource model' do
     classification = Classification.create_from_json(classification)
     resource = create_resource(:classifications =>[   {'ref' => classification.uri} ])
 
-    resource.related_records(:classification).first.title.should eq("top-level classification")
+    expect(resource.related_records(:classification).first.title).to eq("top-level classification")
   end
 
   # See https://gist.github.com/anarchivist/7477913
@@ -155,7 +176,7 @@ describe 'Resource model' do
 
     json[:lock_version] = 0
 
-    expect { resource.update_from_json(json) }.to_not raise_error
+    expect { resource.update_from_json(json) }.not_to raise_error
   end
 
   it "defaults the representative image to the first 'image-service' file_version it is linked to through its instances" do
@@ -199,7 +220,7 @@ describe 'Resource model' do
 
     r = Resource.to_jsonmodel(resource.id)
 
-    Resource.to_jsonmodel(resource.id).representative_image['file_uri'].should match(/bar3/)
+    expect(Resource.to_jsonmodel(resource.id).representative_image['file_uri']).to match(/bar3/)
 
   end
 
@@ -223,7 +244,7 @@ describe 'Resource model' do
 
     r = Resource.to_jsonmodel(resource.id)
 
-    Resource.to_jsonmodel(resource.id).representative_image.should be_falsey
+    expect(Resource.to_jsonmodel(resource.id).representative_image).to be_falsey
 
   end
 
@@ -247,7 +268,7 @@ describe 'Resource model' do
 
     r = Resource.to_jsonmodel(resource.id)
 
-    Resource.to_jsonmodel(resource.id).representative_image.should be_falsey
+    expect(Resource.to_jsonmodel(resource.id).representative_image).to be_falsey
 
   end
 
@@ -286,7 +307,7 @@ describe 'Resource model' do
 
     r = Resource.to_jsonmodel(resource.id)
 
-    Resource.to_jsonmodel(resource.id).representative_image['file_uri'].should match(/bar2/)
+    expect(Resource.to_jsonmodel(resource.id).representative_image['file_uri']).to match(/bar2/)
 
   end
 
@@ -316,7 +337,7 @@ describe 'Resource model' do
 
     r = Resource.to_jsonmodel(resource.id)
 
-    Resource.to_jsonmodel(resource.id).representative_image['file_uri'].should match(/bar2/)
+    expect(Resource.to_jsonmodel(resource.id).representative_image['file_uri']).to match(/bar2/)
   end
 
 
@@ -360,5 +381,105 @@ describe 'Resource model' do
 
   end
 
+  describe "slug tests" do
+    before(:all) do
+      AppConfig[:use_human_readable_urls] = true
+    end
+
+    describe "slug autogen enabled" do
+      describe "by name" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = false
+        end
+        it "autogenerates a slug via title" do
+          resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :title => rand(100000).to_s))
+          expected_slug = clean_slug(resource[:title])
+          expect(resource[:slug]).to eq(expected_slug)
+        end
+        it "cleans slug" do
+          resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :title => "Foo Bar Baz&&&&"))
+          expect(resource[:slug]).to eq("foo_bar_baz")
+        end
+        it "dedupes slug" do
+          resource1 = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :title => "foo"))
+          resource2 = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :title => "foo"))
+          expect(resource1[:slug]).to eq("foo")
+          expect(resource2[:slug]).to eq("foo_1")
+        end
+        it "turns off autogen if slug is blank" do
+          resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => true))
+          resource.update(:slug => "")
+          expect(resource[:is_slug_auto]).to eq(0)
+        end
+      end
+      describe "by id" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = true
+          AppConfig[:generate_resource_slugs_with_eadid] = false
+        end
+        it "autogenerates a slug via identifier" do
+          resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => true))
+          expected_slug = format_identifier_array(resource[:identifier])
+          expect(resource[:slug]).to eq(expected_slug)
+        end
+        it "cleans slug" do
+          resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :id_0 => "Foo Bar Baz&&&&", :id_1 => "", :id_2 => "", :id_3 => ""))
+          expect(resource[:slug]).to eq("foo_bar_baz-")
+        end
+        it "dedupes slug" do
+          resource1 = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :id_0 => "foo", :id_1 => "", :id_2 => "", :id_3 => ""))
+          resource2 = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :id_0 => "foo#", :id_1 => "", :id_2 => "", :id_3 => ""))
+          expect(resource1[:slug]).to eq("foo-")
+          expect(resource2[:slug]).to eq("foo-_1")
+        end
+      end
+      describe "by eadid" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = true
+          AppConfig[:generate_resource_slugs_with_eadid] = true
+        end
+        it "autogenerates a slug via eadid when configured to generate by eadid" do
+          resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => true, :ead_id => rand(100000).to_s))
+          expected_slug = clean_slug(resource[:ead_id])
+          expect(resource[:slug]).to eq(expected_slug)
+        end
+      end
+    end
+
+    describe "slug autogen disabled" do
+      before(:all) do
+        AppConfig[:auto_generate_slugs_with_id] = false
+      end
+      it "slug does not change when config set to autogen by title and title updated" do
+        resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => false, :slug => "foo"))
+        resource.update(:title => rand(100000000))
+        expect(resource[:slug]).to eq("foo")
+      end
+
+      it "slug does not change when config set to autogen by id and id updated" do
+        resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => false, :slug => "foo"))
+        resource.update(:identifier => rand(100000000))
+        expect(resource[:slug]).to eq("foo")
+      end
+    end
+
+    describe "manual slugs" do
+      it "cleans manual slugs" do
+        resource = Resource.create_from_json(build(:json_resource, :is_slug_auto => false))
+        resource.update(:slug => "Foo Bar Baz ###")
+        expect(resource[:slug]).to eq("foo_bar_baz")
+      end
+
+      it "dedupes manual slugs" do
+        resource1 = Resource.create_from_json(build(:json_resource, :is_slug_auto => false, :slug => "foo"))
+        resource2 = Resource.create_from_json(build(:json_resource, :is_slug_auto => false))
+
+        resource2.update(:slug => "foo")
+
+        expect(resource1[:slug]).to eq("foo")
+        expect(resource2[:slug]).to eq("foo_1")
+      end
+    end
+  end
 
 end

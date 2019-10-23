@@ -51,6 +51,78 @@ module AspaceFormHelper
       template.gsub(/\[\]$/, "[#{idx}]")
     end
 
+    # ANW-617:
+    # TODO: Ideally, this method should generate a full URL, with the value from AppConfig[:public_url], so the link is fully actionable.
+    # Ran into a a bug (with AS? or deeper?) where the value of AppConfig[:public_url] was being changed at runtime simply by getting it's value, with code like base_url = AppConfig[:public_url].
+    # For now, this method generates a relative URL, like '\resources\Resource A' to avoid this.
+    def slug_url_field(name, repo_slug = nil, generate_url_with_repo_slug = nil)
+      url = ""
+      html = ""
+
+      case  obj['jsonmodel_type']
+      when 'resource'
+        scope = :repo
+        route = "resources"
+      when 'accession'
+        scope = :repo
+        route = "accessions"
+      when 'classification'
+        scope = :repo
+        route = "classifications"
+      when 'classification_term'
+        scope = :repo
+        route = "classification_terms"
+      when 'digital_object'
+        scope = :repo
+        route = "digital_objects"
+      when 'repository'
+        scope = :global
+        route = "repositories"
+      when 'agent_person'
+        scope = :global
+        route = "agents"
+      when 'agent_family'
+        scope = :global
+        route = "agents"
+      when 'agent_software'
+        scope = :global
+        route = "agents"
+      when 'agent_corporate_entity'
+        scope = :global
+        route = "agents"
+      when 'subject'
+        scope = :global
+        route = "subjects"
+      when 'archival_object'
+        scope = :repo
+        route = "archival_objects"
+      when 'digital_object_component'
+        scope = :repo
+        route = "digital_object_components"
+      end
+
+      # For repo scoped objects,
+      # if we have access to the repo slug in the session and the repo scoped URLs are enabled
+      # generate link with repo slug
+      if !obj['slug'].nil? &&
+         !obj['slug'].empty? &&
+         AppConfig[:use_human_readable_urls]
+
+        if scope == :repo
+          if generate_url_with_repo_slug && repo_slug
+            url << "/" + "repositories" + "/"
+            url << repo_slug
+          end
+        end
+
+        url << "/" + route + "/" + obj['slug']
+      else
+        url = obj['uri']
+      end
+
+      url.to_s
+
+    end
 
     def list_for(objects, context_name, &block)
 
@@ -261,7 +333,21 @@ module AspaceFormHelper
 
     def label_and_readonly(name, default = "", opts = {})
       value = obj[name]
+      if !(value.is_a? String)
+        value = value.to_s
+      end
 
+      begin
+        jsonmodel_type = obj["jsonmodel_type"]
+        prefix = opts[:plugin] ? 'plugins.' : ''
+        schema = JSONModel(jsonmodel_type).schema
+        if (schema["properties"][name].has_key?('dynamic_enum'))
+          value = I18n.t({:enumeration => schema["properties"][name]["dynamic_enum"], :value => value}, :default => value)
+        elsif schema["properties"][name].has_key?("enum")
+          value = I18n.t("#{prefix}#{jsonmodel_type.to_s}.#{property}_#{value}", :default => value)
+        end
+      rescue
+      end
       if opts.has_key? :controls_class
         opts[:controls_class] << " label-only"
       else
@@ -271,6 +357,38 @@ module AspaceFormHelper
       label_with_field(name, value.blank? ? default : value , opts)
     end
 
+    def label_and_merge_select(name, default = "", opts = {})
+      value = obj[name]
+      begin
+        jsonmodel_type = obj["jsonmodel_type"]
+        prefix = opts[:plugin] ? 'plugins.' : ''
+        schema = JSONModel(jsonmodel_type).schema
+        if (schema["properties"][name].has_key?('dynamic_enum'))
+          value = I18n.t({:enumeration => schema["properties"][name]["dynamic_enum"], :value => value}, :default => value)
+        elsif schema["properties"][name].has_key?("enum")
+          value = I18n.t("#{prefix}#{jsonmodel_type.to_s}.#{property}_#{value}", :default => value)
+        end
+      rescue
+      end
+      if opts.has_key? :controls_class
+        opts[:controls_class] << " label-only"
+      else
+        opts[:controls_class] = " label-only"
+      end
+      if value.blank?
+        label_with_field(name, value.blank? ? default : value , opts)
+      else
+        label_with_field(name, merge_select(name, value, opts[:field_opts] || {}), opts)
+      end
+    end
+    def merge_select(name, value, opts = {})
+      value += "<label>".html_safe
+      value += merge_checkbox("#{name}", {
+        :class => "merge-toggle"}, false, false)
+      value += "&#160;<small>".html_safe
+      value += I18n.t("actions.merge_replace")
+      value += "</small></label>".html_safe
+    end
 
     def combobox(name, options, opts = {})
       select(name, options, opts.merge({:"data-combobox" => true}))
@@ -300,6 +418,15 @@ module AspaceFormHelper
       @forms.text_area_tag(path(name), h(value),  options.merge(opts))
     end
 
+    def textarea_ro(name = nil, value = "", opts =  {})
+      return "" if value.blank?
+      opts[:escape] = true unless opts[:escape] == false
+      opts[:base_url] ||= "/"
+      value = clean_mixed_content(value, opts[:base_url]) if opts[:clean] == true
+      value =  @parent.preserve_newlines(value) if opts[:clean] == true
+      value = CGI::escapeHTML(value) if opts[:escape]
+      value.html_safe
+    end
 
     def textfield(name = nil, value = nil, opts =  {})
       value ||= obj[name] if !name.nil?
@@ -369,9 +496,9 @@ module AspaceFormHelper
 
     def label_and_fourpartid
       field_html =  textfield("id_0", obj["id_0"], :class => "id_0 form-control", :size => 10)
-      field_html << textfield("id_1", obj["id_1"], :class => "id_1 form-control", :size => 10, :disabled => obj["id_0"].blank? && obj["id_1"].blank?)
-      field_html << textfield("id_2", obj["id_2"], :class => "id_2 form-control", :size => 10, :disabled => obj["id_1"].blank? && obj["id_2"].blank?)
-      field_html << textfield("id_3", obj["id_3"], :class => "id_3 form-control", :size => 10, :disabled => obj["id_2"].blank? && obj["id_3"].blank?)
+      field_html << textfield("id_1", obj["id_1"], :class => "id_1 form-control", :size => 10, :disabled => obj["id_0"].blank? && obj["id_1"].blank?, :'aria-label' => "id_1")
+      field_html << textfield("id_2", obj["id_2"], :class => "id_2 form-control", :size => 10, :disabled => obj["id_1"].blank? && obj["id_2"].blank?, :'aria-label' => "id_2")
+      field_html << textfield("id_3", obj["id_3"], :class => "id_3 form-control", :size => 10, :disabled => obj["id_2"].blank? && obj["id_3"].blank?, :'aria-label' => "id_3")
       @forms.content_tag(:div, (I18n.t(i18n_for("id_0")) + field_html).html_safe, :class=> "identifier-fields")
       label_with_field("id_0", field_html, :control_class => "identifier-fields")
     end
@@ -410,21 +537,20 @@ module AspaceFormHelper
     # takes a JSON representation of the current options selected and the list of archival_record_level enums
     # returns HTML for a set of checkboxes representing current selected and deselected sets for OAI export
     def checkboxes_for_oai_sets(set_json, value_list)
+      return "" if value_list == nil
       # when called by #new, set_json will be nil.
       if set_json
         set_arry = JSON::parse(set_json)
-      else 
+      else
         set_arry = []
       end
 
-      html = "" 
+      html = ""
 
-      html << "<div class='row'>"
-        html << "<div class='col-sm-2'>"
-          html << "<label class='control-label'>#{I18n.t("repository_oai.oai_sets_available")}</label>"
-        html << "</div>"
-        html << "<div class='col-sm-8'>&nbsp;"
-          html << "<ul class='list_group'>"
+      html << "<div class='form-group'>"
+        html << label("oai_sets_available", {}, ["control-label", "col-sm-2"])
+        html << "<div class='col-sm-9'>"
+          html << "<ul class='checkbox-list'>"
             value_list['enumeration_values'].each do |v|
               # if we have an empty list of checkboxes, assume all sets are enabled.
               # otherwise, a checkbox is on if it's the in the list we get from the backend.
@@ -437,21 +563,74 @@ module AspaceFormHelper
                     if checked
                       html << "checked=\"checked\" "
                     end
-  
+
                     if readonly?
                       html << "disabled />"
                     else
                       html << "/>"
                     end # of checkbox tag
-  
+
                     html << "#{v['value']}"
                   html << "</label>"
                 html << "</div>"
               html << "</li>"
             end
           html << "</ul>"
-        html << "</div>" #col-sm-8
-      html << "</div>" #row
+        html << "</div>" #col-sm-9
+      html << "</div>" #form-group
+
+      return html.html_safe
+    end
+
+    def oai_config_repo_set_codes_field(set_json, repositories)
+      #label_and_textfield(name, opts)
+      set_arry = JSON::parse(set_json)
+
+      html = ""
+
+      html << "<div class='form-group'>"
+          html << label("repo_set_section", {}, ["control-label", "col-sm-2"])
+        html << "<div class='col-sm-9'>"
+          html << "<ul class='checkbox-list'>"
+            repositories.each do |r|
+              # a checkbox is on if it's the in the list we get from the backend.
+              checked = set_arry.include?(r['repo_code'].to_s)
+
+              html << "<li class='list-group-item'>"
+                html << "<div class='checkbox'>"
+                  html << "<label>"
+                    html << "<input id=\"#{r['repo_code']}\" name=\"repo_set_codes[#{r['repo_code']}]\" type=\"checkbox\" "
+                    if checked
+                      html << "checked=\"checked\" "
+                    end
+
+                    html << "/>"
+
+                    html << "#{r['repo_code']}"
+                  html << "</label>"
+                html << "</div>"
+              html << "</li>"
+            end
+          html << "</ul>"
+        html << "</div>" #col-sm-9
+      html << "</div>" #form-group
+
+      return html.html_safe
+    end
+
+    def oai_config_sponsor_set_names_field(set_json, opts = {})
+      # turn array from DB into a comma delimited list for UI
+      set_arry = JSON::parse(set_json)
+      value = set_arry.join("|")
+
+      html = ""
+
+      html << "<div class='form-group'>"
+        html << label("sponsor_set_names", {}, ["control-label", "col-sm-2"])
+        html << "<div class='col-sm-9'>"
+          html << "<input id='oai_config_sponsor_set_names_' type='text' value='#{value}' name='oai_config[sponsor_set_names]' class='form-control js-taggable' datarole='tagsinput'>"
+        html << "</div>"
+      html << "</div>"
 
       return html.html_safe
     end
@@ -463,7 +642,12 @@ module AspaceFormHelper
       @forms.tag("input", options.merge(opts), false, false)
     end
 
+    def merge_checkbox(name, opts = {}, default = false, force_checked = false)
+      options = {:id => "#{id_for(name)}", :type => "checkbox", :name => path(name), :value => "REPLACE"}
+      options[:checked] = "checked" if force_checked or (obj[name] === true) or (obj[name].is_a? String and obj[name].start_with?("true")) or (obj[name] === "REPLACE") or (obj[name].nil? and default)
 
+      @forms.tag("input", options.merge(opts), false, false)
+    end
     def radio(name, value, opts = {})
       options = {:id => "#{id_for(name)}", :type => "radio", :name => path(name), :value => value}
       options[:checked] = "checked" if obj[name] == value
@@ -534,6 +718,11 @@ module AspaceFormHelper
       control_group_classes << "conditionally-required" if required == :conditionally
 
       control_group_classes << "#{opts[:control_class]}" if opts.has_key? :control_class
+
+      # ANW-617: add JS classes to slug fields
+      control_group_classes << "js-slug_textfield" if name == "slug"
+      control_group_classes << "js-slug_auto_checkbox" if name == "is_slug_auto"
+
       controls_classes << "#{opts[:controls_class]}" if opts.has_key? :controls_class
 
       control_group = "<div class=\"#{control_group_classes.join(' ')}\">"
@@ -546,6 +735,38 @@ module AspaceFormHelper
     end
   end
 
+  def merge_victim_view(hash, opts = {})
+    jsonmodel_type = hash["jsonmodel_type"]
+    schema = JSONModel(jsonmodel_type).schema
+    prefix = opts[:plugin] ? 'plugins.' : ''
+    html = "<div class='form-horizontal'>"
+
+    hash.reject {|k,v| PROPERTIES_TO_EXCLUDE_FROM_READ_ONLY_VIEW.include?(k)}.each do |property, value|
+      if schema and schema["properties"].has_key?(property)
+        if (schema["properties"][property].has_key?('dynamic_enum'))
+          value = I18n.t({:enumeration => schema["properties"][property]["dynamic_enum"], :value => value}, :default => value)
+        elsif schema["properties"][property].has_key?("enum")
+          value = I18n.t("#{prefix}#{jsonmodel_type.to_s}.#{property}_#{value}", :default => value)
+        elsif schema["properties"][property]["type"] === "boolean"
+          value = value === true ? "True" : "False"
+        elsif schema["properties"][property]["type"] === "date"
+          value = value.blank? ? "" : Date.strptime(value, "%Y-%m-%d")
+        elsif schema["properties"][property]["type"] === "array"
+          # this view doesn't support arrays
+          next
+        elsif value.kind_of? Hash
+          # can't display an object either
+          next
+        end
+      end
+      html << "<div class='form-group'>"
+      html << "<div class='control-label col-sm-2'>#{I18n.t("#{prefix}#{jsonmodel_type.to_s}.#{property}")}</div>"
+      html << "<div class='label-only col-sm-8'>#{value}</div>"
+      html << "</div>"
+    end
+    html << "</div>"
+    html.html_safe
+  end
 
   class ReadOnlyContext < FormContext
 

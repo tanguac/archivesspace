@@ -6,6 +6,22 @@ describe 'Rest Helpers' do
   before(:all) do
     RESTHelpers::Endpoint.get('/rest_helper_spec/get')
       .description("GET endpoint test")
+      .documentation do
+        <<~DOCS
+        
+          __Heading for Some Extra Docs__
+
+          Documentation in markdown about what's goin' on with this endpoint
+            
+        DOCS
+      end
+      .example('python') do
+        <<~PYTHON
+          from asnake.aspace import ASpace()
+
+          print(ASpace().repositories(2).name)
+        PYTHON
+      end
       .permissions([])
       .returns([200, "(json)"]) \
     do
@@ -32,23 +48,23 @@ describe 'Rest Helpers' do
   it "can define a GET" do
     get '/rest_helper_spec/get'
     json = ASUtils.json_parse(last_response.body)
-    json['method'].should eq('GET')
+    expect(json['method']).to eq('GET')
   end
 
   it "can define a POST" do
     post '/rest_helper_spec/post'
     json = ASUtils.json_parse(last_response.body)
-    json['method'].should eq('POST')
+    expect(json['method']).to eq('POST')
   end
 
   it "can define both a GET and a POST" do
     get '/rest_helper_spec/get_or_post'
     json = ASUtils.json_parse(last_response.body)
-    json['method'].should eq('GET')
+    expect(json['method']).to eq('GET')
 
     post '/rest_helper_spec/get_or_post'
     json = ASUtils.json_parse(last_response.body)
-    json['method'].should eq('POST')
+    expect(json['method']).to eq('POST')
   end
 
 end

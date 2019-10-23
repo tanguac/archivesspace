@@ -1,4 +1,5 @@
 require 'spec_helper'
+require_relative 'spec_slugs_helper'
 
 describe 'ArchivalObject model' do
 
@@ -10,7 +11,7 @@ describe 'ArchivalObject model' do
                                                 ),
                                           :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].title.should eq('A new archival object')
+    expect(ArchivalObject[ao[:id]].title).to eq('A new archival object')
   end
 
 
@@ -20,49 +21,49 @@ describe 'ArchivalObject model' do
 
 
   it "allow archival objects to be created with an extent" do
-    
+
     opts = {:extents => [{
       "portion" => "whole",
       "number" => "5 or so",
       "extent_type" => generate(:extent_type),
     }]}
-    
+
     ao = ArchivalObject.create_from_json(
                                           build(:json_archival_object, opts),
                                           :repo_id => $repo_id)
-    ArchivalObject[ao[:id]].extent.length.should eq(1)
-    ArchivalObject[ao[:id]].extent[0].extent_type.should eq(opts[:extents][0]['extent_type'])
+    expect(ArchivalObject[ao[:id]].extent.length).to eq(1)
+    expect(ArchivalObject[ao[:id]].extent[0].extent_type).to eq(opts[:extents][0]['extent_type'])
   end
 
 
   it "allows archival objects to be created with a date" do
-    
+
     opts = {:dates => [{
          "date_type" => "single",
          "label" => "creation",
          "begin" => generate(:yyyy_mm_dd),
       }]}
-    
+
     ao = ArchivalObject.create_from_json(
                                           build(:json_archival_object, opts),
                                           :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].date.length.should eq(1)
-    ArchivalObject[ao[:id]].date[0].begin.should eq(opts[:dates][0]['begin'])
+    expect(ArchivalObject[ao[:id]].date.length).to eq(1)
+    expect(ArchivalObject[ao[:id]].date[0].begin).to eq(opts[:dates][0]['begin'])
   end
 
 
   it "allows archival objects to be created with an instance" do
     instance = build(:json_instance)
     opts = {:instances => [instance]}
-    
+
     ao = ArchivalObject.create_from_json(
                                          build(:json_archival_object, opts),
                                          :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].instance.length.should eq(1)
-    ArchivalObject[ao[:id]].instance[0].instance_type.should eq(instance['instance_type'])
-    ArchivalObject.to_jsonmodel(ao[:id])['instances'][0]["sub_container"]["type_2"].should eq(instance['sub_container']["type_2"])
+    expect(ArchivalObject[ao[:id]].instance.length).to eq(1)
+    expect(ArchivalObject[ao[:id]].instance[0].instance_type).to eq(instance['instance_type'])
+    expect(ArchivalObject.to_jsonmodel(ao[:id])['instances'][0]["sub_container"]["type_2"]).to eq(instance['sub_container']["type_2"])
   end
 
 
@@ -70,13 +71,13 @@ describe 'ArchivalObject model' do
     ao = ArchivalObject.create_from_json(build(:json_archival_object),
                                          :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].ref_id.should_not be_nil
+    expect(ArchivalObject[ao[:id]].ref_id).not_to be_nil
   end
 
 
   it "will generate a label if requested" do
     opts = {
-      :title => "", 
+      :title => "",
       :dates => [{
                    "date_type" => "single",
                    "label" => "creation",
@@ -87,7 +88,7 @@ describe 'ArchivalObject model' do
     ao = ArchivalObject.create_from_json(build(:json_archival_object, opts),
                                          :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].display_string.should_not be_nil
+    expect(ArchivalObject[ao[:id]].display_string).not_to be_nil
   end
 
 
@@ -99,18 +100,18 @@ describe 'ArchivalObject model' do
                                 build(:json_archival_object, opts),
                                 :repo_id => $repo_id)
     }.to raise_error(JSONModel::ValidationException)
-    
+
     JSONModel::strict_mode(false)
-    
+
     expect { ArchivalObject.create_from_json(
                                 build(:json_archival_object, opts),
                                 :repo_id => $repo_id)
-    }.to_not raise_error
-    
+    }.not_to raise_error
+
     JSONModel::strict_mode(true)
-    
+
   end
-  
+
   it "throws an error if you attempt to add a value to the archival_record_level" do
 
     opts = {:level => "HAMBURGER!"}
@@ -119,9 +120,9 @@ describe 'ArchivalObject model' do
                                 build(:json_archival_object, opts),
                                 :repo_id => $repo_id)
     }.to raise_error(JSONModel::ValidationException)
-    
+
   end
-  
+
   it "enforces ref_id uniqueness only within a resource" do
     res1 = create(:json_resource)
 
@@ -143,7 +144,7 @@ describe 'ArchivalObject model' do
                :resource => {:ref => res1.uri},
                :position => 0
              })
-    }.to_not raise_error
+    }.not_to raise_error
   end
 
   it "auto generates a 'label' based on the title (when no date)" do
@@ -155,7 +156,7 @@ describe 'ArchivalObject model' do
           }),
           :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].display_string.should eq(title)
+    expect(ArchivalObject[ao[:id]].display_string).to eq(title)
   end
 
   it "auto generates a 'label' based on the date (when no title)" do
@@ -168,7 +169,7 @@ describe 'ArchivalObject model' do
       }),
       :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].display_string.should eq(date['expression'])
+    expect(ArchivalObject[ao[:id]].display_string).to eq(date['expression'])
 
     # try with begin and end
     date = build(:json_date, :expression => nil)
@@ -179,7 +180,7 @@ describe 'ArchivalObject model' do
       }),
       :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].display_string.should eq("#{date['begin']} - #{date['end']}")
+    expect(ArchivalObject[ao[:id]].display_string).to eq("#{date['begin']} - #{date['end']}")
   end
 
   it "auto generates a 'label' based on the date and title when both are present" do
@@ -193,7 +194,7 @@ describe 'ArchivalObject model' do
       }),
       :repo_id => $repo_id)
 
-    ArchivalObject[ao[:id]].display_string.should eq("#{title}, #{date['expression']}")
+    expect(ArchivalObject[ao[:id]].display_string).to eq("#{title}, #{date['expression']}")
   end
 
 
@@ -209,9 +210,9 @@ describe 'ArchivalObject model' do
                                                 'notes' => [note]))
 
 
-    NotePersistentId.filter(:persistent_id => "something",
+    expect(NotePersistentId.filter(:persistent_id => "something",
                             :parent_id => resource.id,
-                            :parent_type => 'resource').count.should eq(1)
+                            :parent_type => 'resource').count).to eq(1)
   end
 
 
@@ -235,7 +236,7 @@ describe 'ArchivalObject model' do
                                                                                              :reference => "something")])
                                                                      ]))
 
-    ArchivalObject.to_jsonmodel(ao_with_index).notes[0]['items'][0]['reference_ref']['ref'].should eq(obj.uri)
+    expect(ArchivalObject.to_jsonmodel(ao_with_index).notes[0]['items'][0]['reference_ref']['ref']).to eq(obj.uri)
   end
 
 
@@ -248,7 +249,7 @@ describe 'ArchivalObject model' do
 
     expect {
       ArchivalObject[id].save
-    }.to_not raise_error
+    }.not_to raise_error
   end
 
 
@@ -264,9 +265,9 @@ describe 'ArchivalObject model' do
 
     expect {
       ArchivalObject.sequel_to_jsonmodel(recs)
-    }.to_not raise_error
+    }.not_to raise_error
   end
-  
+
   it "you can add children" do
     resource = create(:json_resource)
     ao = ArchivalObject.create_from_json( build(:json_archival_object, :resource => {:ref => resource.uri}))
@@ -277,14 +278,14 @@ describe 'ArchivalObject model' do
     children = JSONModel(:archival_record_children).from_hash({
       "children" => [archival_object_1, archival_object_2]
     })
-    
-    
+
+
     expect {
-      ao.add_children(children) 
-    }.to_not raise_error
-    
+      ao.add_children(children)
+    }.not_to raise_error
+
     ao = ArchivalObject.get_or_die(ao.id)
-    ao.children.all.length.should == 2
+    expect(ao.children.all.length).to eq(2)
     # now add more!
     archival_object_3 = build(:json_archival_object)
     archival_object_4 = build(:json_archival_object)
@@ -292,11 +293,11 @@ describe 'ArchivalObject model' do
     children = JSONModel(:archival_record_children).from_hash({
       "children" => [archival_object_3, archival_object_4]
     })
-    
+
     expect {
-      ao.add_children(children) 
-    }.to_not raise_error
-  
+      ao.add_children(children)
+    }.not_to raise_error
+
   end
 
   it "won't let you set your parent to a resource that you're not in" do
@@ -312,4 +313,133 @@ describe 'ArchivalObject model' do
     }.to raise_error(RuntimeError, /Consistency check failed/)
   end
 
+  describe "slug tests" do
+    before(:all) do
+      AppConfig[:use_human_readable_urls] = true
+    end
+
+    describe "slug autogen enabled" do
+      describe "by name" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = false
+        end
+        it "autogenerates a slug via title" do
+          archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :title => rand(100000).to_s))
+          expected_slug = clean_slug(archival_object[:title])
+          expect(archival_object[:slug]).to eq(expected_slug)
+        end
+        it "cleans slug" do
+          archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :title => "Foo Bar Baz&&&&"))
+          expected_slug = clean_slug(archival_object[:title])
+          expect(archival_object[:slug]).to eq(expected_slug)
+        end
+
+        it "dedupes slug" do
+          archival_object1 = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :title => "foo"))
+          archival_object2 = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :title => "foo"))
+          expect(archival_object1[:slug]).to eq("foo")
+          expect(archival_object2[:slug]).to eq("foo_1")
+        end
+        it "turns off autogen if slug is blank" do
+          archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true))
+          archival_object.update(:slug => "")
+          expect(archival_object[:is_slug_auto]).to eq(0)
+        end
+      end
+
+      describe "by id" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = true
+          AppConfig[:generate_archival_object_slugs_with_cuid] = false
+        end
+        it "autogenerates a slug via identifier" do
+          archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :ref_id => "foo" + rand(10000).to_s))
+          expected_slug = clean_slug(archival_object[:ref_id])
+          expect(archival_object[:slug]).to eq(expected_slug)
+        end
+
+        it "cleans slug" do
+          archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :ref_id => "FooBarBaz"))
+          expect(archival_object[:slug]).to eq("foobarbaz")
+        end
+
+        it "dedupes slug" do
+          archival_object1 = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :ref_id => "foobar"))
+          archival_object2 = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :ref_id => "foobar"))
+          expect(archival_object1[:slug]).to eq("foobar")
+          expect(archival_object2[:slug]).to eq("foobar_1")
+        end
+      end
+
+      describe "by cuid" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = true
+          AppConfig[:generate_archival_object_slugs_with_cuid] = true
+        end
+        it "autogenerates a slug via cuid" do
+          archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => true, :component_id => rand(100000).to_s))
+          expected_slug = clean_slug(archival_object[:component_id])
+          expect(archival_object[:slug]).to eq(expected_slug)
+        end
+      end
+    end
+
+    describe "slug autogen disabled" do
+      before(:all) do
+        AppConfig[:auto_generate_slugs_with_id] = false
+      end
+      it "slug does not change when config set to autogen by title and title updated" do
+        archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => false, :slug => "foo"))
+        archival_object.update(:title => rand(100000000))
+        expect(archival_object[:slug]).to eq("foo")
+      end
+
+      it "slug does not change when config set to autogen by id and id updated" do
+        archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => false, :slug => "foo"))
+        archival_object.update(:identifier => rand(100000000))
+        expect(archival_object[:slug]).to eq("foo")
+      end
+    end
+
+    describe "manual slugs" do
+      it "cleans manual slugs" do
+        archival_object = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => false))
+        archival_object.update(:slug => "Foo Bar Baz ###")
+        expect(archival_object[:slug]).to eq("foo_bar_baz")
+      end
+
+      it "dedupes manual slugs" do
+        archival_object1 = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => false, :slug => "foo"))
+        archival_object2 = ArchivalObject.create_from_json(build(:json_archival_object, :is_slug_auto => false))
+
+        archival_object2.update(:slug => "foo")
+
+        expect(archival_object1[:slug]).to eq("foo")
+        expect(archival_object2[:slug]).to eq("foo_1")
+      end
+    end
+  end
+
+  it "creates an ARK name with archival object" do
+    ao = ArchivalObject.create_from_json(
+                                          build(
+                                                :json_archival_object,
+                                                :title => 'A new archival object'
+                                                ),
+                                          :repo_id => $repo_id)
+    expect(ArkName.first(:archival_object_id => ao.id)).to_not be_nil
+    ao.delete
+  end
+
+  it "deletes ARK Name when resource is deleted" do
+    ao = ArchivalObject.create_from_json(
+                                          build(
+                                                :json_archival_object,
+                                                :title => 'A new archival object'
+                                                ),
+                                          :repo_id => $repo_id)
+    expect(ArkName.first(:archival_object_id => ao[:id])).to_not be_nil
+    ao.delete
+    expect(ArkName.first(:archival_object_id => ao[:id])).to be_nil
+  end
 end

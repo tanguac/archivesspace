@@ -73,7 +73,10 @@ module ReportUtils
 
       values.each do |value|
         begin
-          results.push(EnumerationValue.get_or_die(value).value)
+          enum_value = EnumerationValue.get_or_die(value)
+          enumeration = enum_value.enumeration.name
+          results.push(I18n.t("enumerations.#{enumeration}.#{enum_value.value}",
+            :default => enum_value.value))
         rescue Exception => e
           results.push("Missing enum value: #{value}")
         end
@@ -107,4 +110,14 @@ module ReportUtils
         '%Y-%m-%d %H:%M:%S')
     end
   end
+
+  def self.normalize_label(label)
+    label.strip.downcase.gsub(/[^a-z0-9]+/, '_').gsub(/_+$/, '')
+  end
+
+  def self.fix_id(row)
+    row[:record_id] = normalize_label(row[:linked_record_type].to_s) + '_' + row[:record_id].to_s
+    row.delete(:linked_record_type)
+  end
+
 end

@@ -1,39 +1,62 @@
-FROM openjdk:8-jre
+FROM ubuntu:18.04 as build_release
+
+# Please note: Docker is not supported as an install method.
+# Docker configuration is being used for internal purposes only.
+# Use of Docker by anyone else is "use at your own risk".
+# Docker related files may be updated at anytime without
+# warning or presence in release notes.
+
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update && \
+    apt-get -y install --no-install-recommends \
+      build-essential \
+      git \
+      openjdk-8-jre-headless \
+      wget \
+      unzip
+
+COPY . /source
+
+RUN cd /source && \
+    ARCHIVESSPACE_VERSION=${SOURCE_BRANCH:-`git symbolic-ref -q --short HEAD || git describe --tags --match v*`} && \
+    ARCHIVESSPACE_VERSION=${ARCHIVESSPACE_VERSION#"heads/"} && \
+    echo "Using version: $ARCHIVESSPACE_VERSION" && \
+    ./scripts/build_release $ARCHIVESSPACE_VERSION && \
+    mv ./*.zip / && \
+    cd / && \
+    unzip /*.zip -d / && \
+    wget http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.39/mysql-connector-java-5.1.39.jar && \
+    cp /mysql-connector-java-5.1.39.jar /archivesspace/lib/
+
+ADD docker-startup.sh /archivesspace/startup.sh
+RUN chmod u+x /archivesspace/startup.sh
+
+FROM ubuntu:18.04
+
 LABEL maintainer="ArchivesSpaceHome@lyrasis.org"
 
 ENV ARCHIVESSPACE_LOGS=/dev/null \
     LANG=C.UTF-8
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
-      git \
-      mysql-client \
-      sendmail \
+COPY --from=build_release /archivesspace /archivesspace
+
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update && \
+    apt-get -y install --no-install-recommends \
+      ca-certificates \
+      openjdk-8-jre-headless \
       wget \
       unzip && \
-      rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -g 1000 archivesspace && \
+    useradd -l -M -u 1000 -g archivesspace archivesspace && \
+    chown -R archivesspace:archivesspace /archivesspace
 
-COPY . /source
-
-RUN cd /source && \
-    export ARCHIVESSPACE_VERSION=`git symbolic-ref -q --short HEAD || git describe --tags --match v*` && \
-    ./scripts/build_release $ARCHIVESSPACE_VERSION && \
-    mv ./*.zip / && \
-    rm -rf /source && \
-    cd / && \
-    unzip /*.zip -d / && \
-    rm /*.zip && \
-    rm -rf /archivesspace/plugins/* && \
-    chmod 755 /archivesspace/archivesspace.sh && \
-    wget http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.39/mysql-connector-java-5.1.39.jar && \
-    cp /mysql-connector-java-5.1.39.jar /archivesspace/lib/
-
-# FINALIZE SETUP
-ADD docker-startup.sh /startup.sh
-RUN chmod u+x /*.sh
+USER archivesspace
 
 EXPOSE 8080 8081 8089 8090 8092
-HEALTHCHECK --interval=1m --timeout=5s --start-period=5m --retries=2 \
-  CMD curl -f http://localhost:8089/ || exit 1
 
-CMD ["/startup.sh"]
+HEALTHCHECK --interval=1m --timeout=5s --start-period=5m --retries=2 \
+  CMD wget -q --spider http://localhost:8089/ || exit 1
+
+CMD ["/archivesspace/startup.sh"]

@@ -1,4 +1,5 @@
 require 'spec_helper'
+require_relative 'spec_slugs_helper'
 
 describe 'Classification models' do
 
@@ -33,25 +34,25 @@ describe 'Classification models' do
 
 
   it "allows a classification to be created" do
-    classification.title.should eq("top-level classification")
-    Classification.to_jsonmodel(classification)['creator']['ref'].should eq(creator.uri)
+    expect(classification.title).to eq("top-level classification")
+    expect(Classification.to_jsonmodel(classification)['creator']['ref']).to eq(creator.uri)
   end
 
 
   it "allows a tree of classification_terms to be created" do
     term = create_classification_term(classification)
-    term.title.should eq("classification A")
+    expect(term.title).to eq("classification A")
 
-    classification.tree['children'].count.should eq(1)
-    classification.tree['children'].first['title'].should eq(term.title)
-    classification.tree['children'].first['record_uri'].should eq(term.uri)
+    expect(classification.tree['children'].count).to eq(1)
+    expect(classification.tree['children'].first['title']).to eq(term.title)
+    expect(classification.tree['children'].first['record_uri']).to eq(term.uri)
 
     second_term = create_classification_term(classification,
                                              :title => "child of the last term",
                                              :identifier => "another",
                                              :parent => {'ref' => term.uri})
 
-    classification.tree['children'][0]['children'][0]['title'].should eq(second_term.title)
+    expect(classification.tree['children'][0]['children'][0]['title']).to eq(second_term.title)
   end
 
 
@@ -87,7 +88,7 @@ describe 'Classification models' do
                                  :title => "same titles",
                                  :identifier => "same IDs",
                                  :parent => {'ref' => term1.uri})
-    }.to_not raise_error
+    }.not_to raise_error
   end
 
 
@@ -104,7 +105,7 @@ describe 'Classification models' do
 
     expect {
       classification.delete
-    }.to_not raise_error
+    }.not_to raise_error
 
     expect { term1.refresh }.to raise_error(Sequel::Error)
     expect { term2.refresh }.to raise_error(Sequel::Error)
@@ -123,7 +124,7 @@ describe 'Classification models' do
 
     titles = classification.tree['children'].map {|e| e['title']}
 
-    titles.should eq(["title 4", "title 0", "title 1", "title 2", "title 3"])
+    expect(titles).to eq(["title 4", "title 0", "title 1", "title 2", "title 3"])
   end
 
 
@@ -139,7 +140,7 @@ describe 'Classification models' do
 
     titles = ClassificationTerm.to_jsonmodel(term2)['path_from_root'].map {|e| e['title']}
 
-    titles.should eq(["top-level classification", "same titles", "same titles"])
+    expect(titles).to eq(["top-level classification", "same titles", "same titles"])
   end
 
 
@@ -152,10 +153,101 @@ describe 'Classification models' do
                                            {'ref' => term.uri}
                                            ])
 
-    JSONModel(:classification).find(classification.id).linked_records.map {|link| link['ref'] }.should include(resource.uri)
+    expect(JSONModel(:classification).find(classification.id).linked_records.map {|link| link['ref'] }).to include(resource.uri)
 
-    JSONModel(:classification_term).find(term.id).linked_records.map {|link| link['ref'] }.should include(resource.uri)
+    expect(JSONModel(:classification_term).find(term.id).linked_records.map {|link| link['ref'] }).to include(resource.uri)
 
   end
 
+  describe "slug tests" do
+    before(:all) do
+      AppConfig[:use_human_readable_urls] = true
+    end
+
+    describe "slug autogen enabled" do
+      describe "by name" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = false
+        end
+        it "autogenerates a slug via title" do
+          classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => true, :title => rand(100000).to_s))
+          expected_slug = clean_slug(classification[:title])
+          expect(classification[:slug]).to eq(expected_slug)
+        end
+        it "cleans slug" do
+          classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => true, :title => "Foo Bar Baz&&&&"))
+          expect(classification[:slug]).to eq("foo_bar_baz")
+        end
+
+        it "dedupes slug" do
+          classification1 = Classification.create_from_json(build(:json_classification, :is_slug_auto => true, :title => "foo"))
+          classification2 = Classification.create_from_json(build(:json_classification, :is_slug_auto => true, :title => "foo"))
+          expect(classification1[:slug]).to eq("foo")
+          expect(classification2[:slug]).to eq("foo_1")
+        end
+        it "turns off autogen if slug is blank" do
+          classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => true))
+          classification.update(:slug => "")
+          expect(classification[:is_slug_auto]).to eq(0)
+        end
+      end
+      describe "by id" do
+        before(:all) do
+          AppConfig[:auto_generate_slugs_with_id] = true
+        end
+        it "autogenerates a slug via identifier" do
+          classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => true))
+          expected_slug = clean_slug(classification[:identifier])
+          expect(classification[:slug]).to eq(expected_slug)
+        end
+        it "cleans slug" do
+          classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => true, :identifier => "Foo Bar Baz&&&&"))
+          expect(classification[:slug]).to eq("foo_bar_baz")
+        end
+
+        it "dedupes slug" do
+          classification1 = Classification.create_from_json(build(:json_classification, :is_slug_auto => true, :identifier => "foo"))
+          classification2 = Classification.create_from_json(build(:json_classification, :is_slug_auto => true, :identifier => "foo#"))
+          expect(classification1[:slug]).to eq("foo")
+          expect(classification2[:slug]).to eq("foo_1")
+        end
+      end
+    end
+
+    describe "slug autogen disabled" do
+      before(:all) do
+        AppConfig[:auto_generate_slugs_with_id] = false
+      end
+      it "slug does not change when config set to autogen by title and title updated" do
+        classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => false, :slug => "foo"))
+        classification.update(:title => rand(100000000))
+        expect(classification[:slug]).to eq("foo")
+      end
+
+      it "slug does not change when config set to autogen by id and id updated" do
+        classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => false, :slug => "foo"))
+        classification.update(:identifier => rand(100000000))
+        expect(classification[:slug]).to eq("foo")
+      end
+    end
+
+    describe "manual slugs" do
+      it "cleans manual slugs" do
+        classification = Classification.create_from_json(build(:json_classification, :is_slug_auto => false))
+        classification.update(:slug => "Foo Bar Baz ###")
+
+        expect(classification[:slug]).to eq("foo_bar_baz")
+      end
+
+      it "dedupes manual slugs" do
+        classification1 = Classification.create_from_json(build(:json_classification, :is_slug_auto => false, :slug => "foo"))
+        classification2 = Classification.create_from_json(build(:json_classification, :is_slug_auto => false))
+
+        classification2.update(:slug => "foo")
+
+        expect(classification1[:slug]).to eq("foo")
+        expect(classification2[:slug]).to eq("foo_1")
+      end
+    end
+  end
 end

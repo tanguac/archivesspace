@@ -16,6 +16,16 @@ class ArchivesSpaceOAIRepository < OAI::Provider::Model
     }
   end
 
+  def get_oai_config_values
+    @oai_config          = OAIConfig.all.first
+    @repo_set_codes      = @oai_config[:repo_set_codes] ? JSON.parse(@oai_config[:repo_set_codes]) : []
+    @sponsor_set_names   = @oai_config[:sponsor_set_names] ? JSON.parse(@oai_config[:sponsor_set_names]) : []
+    @repo_description    = @oai_config[:repo_set_description]
+    @sponsor_description = @oai_config[:sponsor_set_description]
+    @repo_set_name       = @oai_config[:repo_set_name]
+    @sponsor_set_name    = @oai_config[:sponsor_set_name]
+  end
+
   # If a given record type supports deletes, we'll need a way to look up its
   # tombstone records.  Since we only know the URIs of those tombstones, we're
   # pretty much stuck doing slow lookups.
@@ -28,7 +38,7 @@ class ArchivesSpaceOAIRepository < OAI::Provider::Model
 
   DELETES_PER_PAGE = 100
 
-  RESOLVE = ['repository', 'subjects', 'linked_agents', 'digital_object', 'top_container', 'ancestors', 'linked_agents', 'resource']
+  RESOLVE = ['repository', 'subjects', 'linked_agents', 'digital_object', 'top_container', 'ancestors', 'linked_agents', 'resource', 'top_container::container_profile']
 
 
   def earliest
@@ -41,28 +51,50 @@ class ArchivesSpaceOAIRepository < OAI::Provider::Model
 
   def sets
     available_levels = BackendEnumSource.values_for("archival_record_level")
+    get_oai_config_values
 
+    # ANW-674: 
+    # Get set values from OAIConfig table instead of config file
     config_sets = []
 
-    if AppConfig.has_key?(:oai_sets)
-      config_sets = AppConfig[:oai_sets].map {|set_name, values|
-        unless available_levels.include?(set_name)
-          set_properties = {:name => set_name, :spec => set_name}
+    if @repo_set_codes.any? && !available_levels.include?(@repo_set_name)
+      repo_oai_set = OAI::Set.new({:name => @repo_set_name,
+                                   :spec => @repo_set_name,
+                                   :description => build_set_description(@repo_description)})
 
-          if (description = values.fetch(:description, nil))
-            set_properties[:description] = build_set_description(description)
-          end
+      config_sets.push(repo_oai_set)
+    end
 
-          OAI::Set.new(set_properties)
-        end
-      }.compact
+    if @sponsor_set_names.any? && !available_levels.include?(@sponsor_set_name)
+      repo_sponsor_set = OAI::Set.new({:name => @sponsor_set_name,
+                                       :spec => @sponsor_set_name,
+                                       :description => build_set_description(@sponsor_description)})
+
+      config_sets.push(repo_sponsor_set)
     end
 
     level_sets = available_levels.map {|level|
       OAI::Set.new(:name => level, :spec => level)
     }
 
-    config_sets + level_sets
+    config_sets + level_sets.select {|s| set_enabled?(s) }
+  end
+
+  # returns true if set is enabled in at least one repository
+  def set_enabled?(set)
+    sets_in_repos = Repository.exclude(:publish => 0)
+                              .exclude(:oai_is_disabled => 1)
+                              .select(:oai_sets_available)
+                              .map {|r| JSON::parse(r[:oai_sets_available]) rescue [] }
+
+    # if oai_sets_available array is blank, then all sets are enabled for that repository.
+    # if a repository is restricted to certain sets, then those set_ids will be in the oai_sets_available array.
+    # So, we're looking to see if there is at least one repository with an empty set OR this set_id in the oai_sets_available array.
+    set_id = BackendEnumSource.id_for_value("archival_record_level", set.name).to_s
+
+    repos_enabling_set = sets_in_repos.select {|r| r.length == 0 || r.include?(set_id)}
+
+    return repos_enabling_set.length > 0
   end
 
   def fetch_single_record(uri, options = {})
@@ -359,27 +391,25 @@ class ArchivesSpaceOAIRepository < OAI::Provider::Model
       return dataset.filter(:level_id => level_id)
     end
 
-    # Otherwise, look for manually defined sets from the config file.
-    if AppConfig.has_key?(:oai_sets)
-      set_definition = AppConfig[:oai_sets].fetch(set)
+    # ANW-674
+    # Otherwise, look for manually defined sets in the OAIConfig table
+    get_oai_config_values
 
-      if set_definition[:repo_codes]
-        dataset = dataset.filter(:repo_id => Repository.filter(:repo_code => set_definition[:repo_codes]).select(:id))
-      end
+    if @repo_set_codes.any? && set == @repo_set_name
+      dataset = dataset.filter(:repo_id => Repository.filter(:repo_code => @repo_set_codes).select(:id))
 
-      # We work off the SHA1 of the sponsor here because Derby doesn't make it
-      # easy to compare CLOBs with strings without DB-specific stuff.  And since
-      # we don't know how long people's sponsor text might be in the wild, it
-      # seemed risky to change the column type.
-      if set_definition[:sponsors]
-        sponsor_hashes = set_definition[:sponsors].map {|sponsor| Digest::SHA1.hexdigest(sponsor)}
+    # We work off the SHA1 of the sponsor here because Derby doesn't make it
+    # easy to compare CLOBs with strings without DB-specific stuff.  And since
+    # we don't know how long people's sponsor text might be in the wild, it
+    # seemed risky to change the column type.
+    elsif @sponsor_set_names.any? && set == @sponsor_set_name
+      sponsor_hashes = @sponsor_set_names.map {|sponsor| Digest::SHA1.hexdigest(sponsor)}
 
-        if model == Resource
-          dataset = dataset.filter(:finding_aid_sponsor_sha1 => sponsor_hashes)
-        else
-          dataset = dataset.filter(:root_record_id => Resource.filter(:finding_aid_sponsor_sha1 => sponsor_hashes).select(:id))
-        end
-      end
+      if model == Resource
+        dataset = dataset.filter(:finding_aid_sponsor_sha1 => sponsor_hashes)
+      else
+        dataset = dataset.filter(:root_record_id => Resource.filter(:finding_aid_sponsor_sha1 => sponsor_hashes).select(:id))
+      end     
     end
 
     dataset

@@ -1,3 +1,5 @@
+# Schema inherits from the abstract_archival_object schema, and must only include extensions/overrides unique to digital object records.
+
 {
   :schema => {
     "$schema" => "http://www.archivesspace.org/archivesspace.json",
@@ -9,6 +11,8 @@
 
       "digital_object_id" => {"type" => "string", "maxLength" => 255, "ifmissing" => "error"},
       "level" => {"type" => "string", "dynamic_enum" => "digital_object_level"},
+      "slug" => {"type" => "string"},
+      "is_slug_auto" => {"type" => "boolean", "default" => true},
       "digital_object_type" => {
         "type" => "string",
         "dynamic_enum" => "digital_object_digital_object_type"

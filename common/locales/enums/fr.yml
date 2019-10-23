@@ -291,10 +291,11 @@
       ingest: Unspecified ingested source
       lcshac: Library of Congress Children's Subject Headings
       local: Local sources
+      lcnaf: Library of Congress Name Authority File
       naf: NACO Authority File
       nad: NAD / ARK II Name Authority Database
       nal: National Agricultural Library subject headings
-      ram: Répertoire d'autorités RAMEAU  
+      ram: Répertoire d'autorités RAMEAU
       rvm: Répertoire de vedettes-matière
       ulan: Union List of Artist Names
     name_rule:
@@ -437,7 +438,7 @@
       nal: National Agricultural Library subject headings
       rbgenr: "Genre Terms: A Thesaurus for Use in Rare Book and Special Collections Cataloguing"
       rvm: Répertoire de vedettes-matière
-      ram: Répertoire d'autorités RAMEAU  
+      ram: Répertoire d'autorités RAMEAU
       tgn: Getty Thesaurus of Geographic Names
       lcgft: Library of Congress Genre/Form Terms
     event_outcome:
@@ -583,6 +584,7 @@
       chv: Tchouvache
       chy: Cheyenne
       cmc: Langues chames
+      cnr: Monténégrin
       cop: Copte
       cor: Cornique
       cos: Corse
@@ -845,7 +847,6 @@
       pra: Langues prâkrit
       pro: "Provençal ancien, occitan ancien (jusqu'à 1500)"
       pus: Pachto; Pashtou
-      qaa-qtz: "Reservé pour utilisation locale"
       que: Quéchua
       raj: Rajasthani
       rap: Rapanui
@@ -973,12 +974,213 @@
       zap: Zapotèque
       zbl: Smboles Bliss, Bliss
       zen: Zénaga
+      zgh: Amazighe Standard Marocain
       zha: Zhuang; Chuang
       znd: Langues zandé
       zul: Zoulou
       zun: Zuñi
       zxx: Pas de contenu linguistique, non applicable
       zza: Zaza, dimili, dimli, kirdki, kirmanjki, zazaki
+    script_iso15924:
+      Adlm: Adlam
+      Afak: Afaka
+      Aghb: Caucasian Albanian
+      Ahom: Ahom, Tai Ahom
+      Arab: Arabic
+      Aran: Arabic (Nastaliq variant)
+      Armi: Imperial Aramaic
+      Armn: Armenian
+      Avst: Avestan
+      Bali: Balinese
+      Bamu: Bamum
+      Bass: Bassa Vah
+      Batk: Batak
+      Beng: Bengali (Bangla)
+      Bhks: Bhaiksuki
+      Blis: Blissymbols
+      Bopo: Bopomofo
+      Brah: Brahmi
+      Brai: Braille
+      Bugi: Buginese
+      Buhd: Buhid
+      Cakm: Chakma
+      Cans: Unified Canadian Aboriginal Syllabics
+      Cari: Carian
+      Cham: Cham
+      Cher: Cherokee
+      Cirt: Cirth
+      Copt: Coptic
+      Cpmn: Cypro-Minoan
+      Cprt: Cypriot syllabary
+      Cyrl: Cyrillic
+      Cyrs: Cyrillic (Old Church Slavonic variant)
+      Deva: Devanagari (Nagari)
+      Dogr: Dogra
+      Dsrt: Deseret (Mormon)
+      Dupl: Duployan shorthand, Duployan stenography
+      Egyd: Egyptian demotic
+      Egyh: Egyptian hieratic
+      Egyp: Egyptian hieroglyphs
+      Elba: Elbasan
+      Elym: Elymaic
+      Ethi: Ethiopic (Geʻez)
+      Geok: Khutsuri (Asomtavruli and Nuskhuri)
+      Geor: Georgian (Mkhedruli and Mtavruli)
+      Glag: Glagolitic
+      Gong: Gunjala Gondi
+      Gonm: Masaram Gondi
+      Goth: Gothic
+      Gran: Grantha
+      Grek: Greek
+      Gujr: Gujarati
+      Guru: Gurmukhi
+      Hanb: Han with Bopomofo (alias for Han + Bopomofo)
+      Hang: Hangul (Hangŭl, Hangeul)
+      Hani: Han (Hanzi, Kanji, Hanja)
+      Hano: Hanunoo (Hanunóo)
+      Hans: Han (Simplified variant)
+      Hant: Han (Traditional variant)
+      Hatr: Hatran
+      Hebr: Hebrew
+      Hira: Hiragana
+      Hluw: Anatolian Hieroglyphs (Luwian Hieroglyphs, Hittite Hieroglyphs)
+      Hmng: Pahawh Hmong
+      Hmnp: Nyiakeng Puachue Hmong
+      Hrkt: Japanese syllabaries (alias for Hiragana + Katakana)
+      Hung: Old Hungarian (Hungarian Runic)
+      Inds: Indus (Harappan)
+      Ital: Old Italic (Etruscan, Oscan, etc.)
+      Jamo: Jamo (alias for Jamo subset of Hangul)
+      Java: Javanese
+      Jpan: Japanese (alias for Han + Hiragana + Katakana)
+      Jurc: Jurchen
+      Kali: Kayah Li
+      Kana: Katakana
+      Khar: Kharoshthi
+      Khmr: Khmer
+      Khoj: Khojki
+      Kitl: Khitan large script
+      Kits: Khitan small script
+      Knda: Kannada
+      Kore: Korean (alias for Hangul + Han)
+      Kpel: Kpelle
+      Kthi: Kaithi
+      Lana: Tai Tham (Lanna)
+      Laoo: Lao
+      Latf: Latin (Fraktur variant)
+      Latg: Latin (Gaelic variant)
+      Latn: Latin
+      Leke: Leke
+      Lepc: Lepcha (Róng)
+      Limb: Limbu
+      Lina: Linear A
+      Linb: Linear B
+      Lisu: Lisu (Fraser)
+      Loma: Loma
+      Lyci: Lycian
+      Lydi: Lydian
+      Mahj: Mahajani
+      Maka: Makasar
+      Mand: Mandaic, Mandaean
+      Mani: Manichaean
+      Marc: Marchen
+      Maya: Mayan hieroglyphs
+      Medf: Medefaidrin (Oberi Okaime, Oberi Ɔkaimɛ)
+      Mend: Mende Kikakui
+      Merc: Meroitic Cursive
+      Mero: Meroitic Hieroglyphs
+      Mlym: Malayalam
+      Modi: Modi, Moḍī
+      Mong: Mongolian
+      Moon: Moon (Moon code, Moon script, Moon type)
+      Mroo: Mro, Mru
+      Mtei: Meitei Mayek (Meithei, Meetei)
+      Mult: Multani
+      Mymr: Myanmar (Burmese)
+      Nand: Nandinagari
+      Narb: Old North Arabian (Ancient North Arabian)
+      Nbat: Nabataean
+      Newa: Newa, Newar, Newari, Nepāla lipi
+      Nkdb: Naxi Dongba (na²¹ɕi³³ to³³ba²¹, Nakhi Tomba)
+      Nkgb: Naxi Geba (na²¹ɕi³³ gʌ²¹ba²¹, 'Na-'Khi ²Ggŏ-¹baw, Nakhi Geba)
+      Nkoo: N’Ko
+      Nshu: Nüshu
+      Ogam: Ogham
+      Olck: Ol Chiki (Ol Cemet’, Ol, Santali)
+      Orkh: Old Turkic, Orkhon Runic
+      Orya: Oriya (Odia)
+      Osge: Osage
+      Osma: Osmanya
+      Palm: Palmyrene
+      Pauc: Pau Cin Hau
+      Perm: Old Permic
+      Phag: Phags-pa
+      Phli: Inscriptional Pahlavi
+      Phlp: Psalter Pahlavi
+      Phlv: Book Pahlavi
+      Phnx: Phoenician
+      Plrd: Miao (Pollard)
+      Piqd: Klingon (KLI pIqaD)
+      Prti: Inscriptional Parthian
+      Qaaa: Reserved for private use (start)
+      Qabx: Reserved for private use (end)
+      Rjng: Rejang (Redjang, Kaganga)
+      Rohg: Hanifi Rohingya
+      Roro: Rongorongo
+      Runr: Runic
+      Samr: Samaritan
+      Sara: Sarati
+      Sarb: Old South Arabian
+      Saur: Saurashtra
+      Sgnw: SignWriting
+      Shaw: Shavian (Shaw)
+      Shrd: Sharada, Śāradā
+      Shui: Shuishu
+      Sidd: Siddham, Siddhaṃ, Siddhamātṛkā
+      Sind: Khudawadi, Sindhi
+      Sinh: Sinhala
+      Sogd: Sogdian
+      Sogo: Old Sogdian
+      Sora: Sora Sompeng
+      Soyo: Soyombo
+      Sund: Sundanese
+      Sylo: Syloti Nagri
+      Syrc: Syriac
+      Syre: Syriac (Estrangelo variant)
+      Syrj: Syriac (Western variant)
+      Syrn: Syriac (Eastern variant)
+      Tagb: Tagbanwa
+      Takr: Takri, Ṭākrī, Ṭāṅkrī
+      Tale: Tai Le
+      Talu: New Tai Lue
+      Taml: Tamil
+      Tang: Tangut
+      Tavt: Tai Viet
+      Telu: Telugu
+      Teng: Tengwar
+      Tfng: Tifinagh (Berber)
+      Tglg: Tagalog (Baybayin, Alibata)
+      Thaa: Thaana
+      Thai: Thai
+      Tibt: Tibetan
+      Tirh: Tirhuta
+      Ugar: Ugaritic
+      Vaii: Vai
+      Visp: Visible Speech
+      Wara: Warang Citi (Varang Kshiti)
+      Wcho: Wancho
+      Wole: Woleai
+      Xpeo: Old Persian
+      Xsux: Cuneiform, Sumero-Akkadian
+      Yiii: Yi
+      Zanb: Zanabazar Square (Zanabazarin Dörböljin Useg, Xewtee Dörböljin Bicig, Horizontal Square Script)
+      Zinh: Code for inherited script
+      Zmth: Mathematical notation
+      Zsye: Symbols (Emoji variant)
+      Zsym: Symbols
+      Zxxx: Code for unwritten documents
+      Zyyy: Code for undetermined script
+      Zzzz: Code for uncoded script
     archival_record_level:
       class: Classe
       collection: Collection
@@ -1219,7 +1421,7 @@
       NU: Niue
       NF: Iles Norfolk
       MP: Northern Mariana Islands
-      NO: Norvège
+      "NO": Norvège
       OM: Oman
       PK: Pakistan
       PW: Palaos
@@ -1345,6 +1547,7 @@
       appraisal: Evaluation
       arrangement: Classement
       bibliography: Bibliographie
+      note_bibliography: Bibliographie
       bioghist: Biographique / Historique
       custodhist: Historique de la conservation
       fileplan: Plan de classement
@@ -1374,6 +1577,8 @@
       physfacet: Particularité physique
       rights_statement: Droits
     note_digital_object_type:
+      <<: *note_type_definitions
+    note_langmaterial_type:
       <<: *note_type_definitions
     note_multipart_type:
       <<: *note_type_definitions
@@ -1595,6 +1800,7 @@
     file_version_xlink_show_attribute: Version de fichier Xlink Show Attribute
     instance_instance_type: Instance Instance Type
     language_iso639_2: Langue ISO 639-2
+    script_iso15924: Langage ISO 15924
     linked_agent_archival_record_relators: Agent relié Rapports de notices archivistiques
     linked_agent_event_roles: Agent relié Rôles d'événement
     linked_agent_role: Rôle de l'agent relié
@@ -1605,6 +1811,7 @@
     name_source: Source de nom
     note_bibliography_type: Note Type de bibliographie
     note_digital_object_type: Note Type d'objet numérique
+    note_langmaterial_type: Remarque Langue du type de matériau
     note_index_item_type: Note Type d'item d'index
     note_index_type: Note Type d'index
     note_multipart_type: Note Type de multipartite

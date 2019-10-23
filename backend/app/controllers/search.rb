@@ -37,10 +37,14 @@ class ArchivesSpaceService < Sinatra::Base
       String,
       "Search within a collection of records (defined by the record at the root of the tree)",
       :optional => true],
-      [ "dt",
+    [ "dt",
         String,
         "Format to return (JSON default)",
-        :optional => true ]
+        :optional => true ],
+    ["fields",
+        [String],
+        "The list of fields to include in the results",
+        :optional => true]
   ]
 
 
@@ -54,9 +58,9 @@ class ArchivesSpaceService < Sinatra::Base
   do
     if params[:dt] && params[:dt] == "csv"
       stream_response(Search.search_csv(params, params[:repo_id]), "text/csv")
-    else 
+    else
       json_response(Search.search(params, params[:repo_id]))
-    end 
+    end
   end
 
 

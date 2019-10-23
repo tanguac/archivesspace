@@ -9,17 +9,17 @@ class SubjectsController < ApplicationController
 
 
   def index
-    respond_to do |format| 
-      format.html {   
+    respond_to do |format|
+      format.html {
         @search_data = Search.global({"sort" => "title_sort asc"}.merge(params_for_backend_search.merge({"facet[]" => SearchResultData.SUBJECT_FACETS})),
                                  "subjects")
       }
-      format.csv { 
+      format.csv {
         search_params = params_for_backend_search.merge({ "sort" => "title_sort asc",  "facet[]" => SearchResultData.SUBJECT_FACETS})
         uri = "/search/subjects"
         csv_response( uri, search_params )
-      }  
-    end 
+      }
+    end
   end
 
   def show
@@ -54,6 +54,14 @@ class SubjectsController < ApplicationController
                     render :json => @subject.to_hash if inline?
                   else
                     flash[:success] = I18n.t("subject._frontend.messages.created")
+
+                    if @subject["is_slug_auto"] == false &&
+                       @subject["slug"] == nil &&
+                       params["subject"] &&
+                       params["subject"]["is_slug_auto"] == "1"
+                      flash[:warning] = I18n.t("slug.autogen_disabled")
+                    end
+
                     return redirect_to :controller => :subjects, :action => :new if params.has_key?(:plus_one)
                     redirect_to :controller => :subjects, :action => :edit, :id => id
                   end
@@ -67,6 +75,14 @@ class SubjectsController < ApplicationController
                 :on_invalid => ->(){ return render :action => :edit },
                 :on_valid => ->(id){
                   flash[:success] = I18n.t("subject._frontend.messages.updated")
+
+                  if @subject["is_slug_auto"] == false &&
+                     @subject["slug"] == nil &&
+                     params["subject"] &&
+                     params["subject"]["is_slug_auto"] == "1"
+                    flash[:warning] = I18n.t("slug.autogen_disabled")
+                  end
+
                   redirect_to :controller => :subjects, :action => :edit, :id => id
                 })
   end

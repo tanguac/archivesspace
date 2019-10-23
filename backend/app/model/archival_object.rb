@@ -8,6 +8,7 @@ class ArchivalObject < Sequel::Model(:archival_object)
 
   include Subjects
   include Extents
+  include LangMaterials
   include Dates
   include ExternalDocuments
   include RightsStatements
@@ -25,6 +26,7 @@ class ArchivalObject < Sequel::Model(:archival_object)
   include RightsRestrictionNotes
   include RepresentativeImages
   include Assessments::LinkedRecord
+  include TouchRecords
 
   enable_suppression
 
@@ -43,6 +45,20 @@ class ArchivalObject < Sequel::Model(:archival_object)
 
   auto_generate :property => :display_string,
                 :generator => proc { |json| ArchivalObject.produce_display_string(json) }
+
+
+  auto_generate :property => :slug,
+                :generator => proc { |json|
+                  if AppConfig[:use_human_readable_urls]
+                    if json["is_slug_auto"]
+                      AppConfig[:auto_generate_slugs_with_id] ? 
+                        SlugHelpers.id_based_slug_for(json, ArchivalObject) : 
+                        SlugHelpers.name_based_slug_for(json, ArchivalObject)
+                    else
+                      json["slug"]
+                    end
+                  end
+                }
 
 
   def self.produce_display_string(json)
@@ -96,6 +112,10 @@ class ArchivalObject < Sequel::Model(:archival_object)
     end
 
     result
+  end
+
+  def self.touch_records(obj)
+    [{ type: Resource, ids: [obj.root_record_id] }]
   end
 
 end

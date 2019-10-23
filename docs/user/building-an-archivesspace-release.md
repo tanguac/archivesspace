@@ -1,10 +1,8 @@
 ---
-title: Building an ArchivesSpace Release 
+title: Building an ArchivesSpace release
 layout: en
-permalink: /user/building-an-archivesspace-release/ 
+permalink: /user/building-an-archivesspace-release/
 ---
--------------------------------------------------------------
-
 ## Try to tie up any loose ends
 
 Before doing the release, it's a good idea to try and make sure nothing is left
@@ -58,7 +56,7 @@ script that rips apart the READMEs. Also, links in the site's side bar need to b
 added to [Jekyll's
 sidebar](https://github.com/archivesspace/archivesspace/blob/master/docs/_includes/sidebar.html).
 
-Before the `build/run doc:build` step, but sure you run the `build/run backend:test` step. This will run all your tests, including the documentation_spec.rb spec, which runs through all the endpoints, generates factory girl fixture json, and spits it into a json file ( endpoint_examples.json ).
+Before the `build/run doc:build` step, be sure you run the `build/run backend:test` step. This will run all your tests, including the documentation_spec.rb spec, which runs through all the endpoints, generates factory bot fixture json, and spits it into a json file (endpoint_examples.json).
 
 To build the documentation:
 
@@ -79,23 +77,26 @@ To build the documentation:
 ```
   $ build/run backend:test
 ```
+Alternatively, if only updating the API docs
+```
+  $ build/run backend:test -Dspec='documentation_spec.rb'
+```
 
-5. Update the fallback_version value in common/asconstants.rb with the new version number so that the documentation with have the correct version number in the footer
+5. Update the fallback_version value in common/asconstants.rb with the new version number so that the documentation will have the correct version number in the footer
 ```
   fallback_version = "vX.X.X.a"
 ```
 
 6. Rip apart the READMEs for content by running the doc:build ANT task
-
 ```
   $ build/run doc:build
 ```
 
-7. Build Slate ( using a standard Ruby )
-
+7. Build Slate/API docs (using a standard Ruby)
+  *Note*: At present, middleman requires a bundler version < 2.0 so the docs have been updated to reflect this.
 ```
   $ cd docs/slate
-  $ gem install bundler
+  $ gem install bundler --version '< 2.0'
   $ bundle install --binstubs
   $ ./bin/middleman build
   $ ./bin/middleman server # optional if you want to have a look at the site.
@@ -104,7 +105,6 @@ To build the documentation:
 ```
 
 8. Compile Jekyll
-
 ```
   $ cd docs
   $ gem install bundler
@@ -114,14 +114,13 @@ To build the documentation:
 ```
 
 9. Commit the docs directory to git then push it to the gh-pages branch
-
 ```
-$ cd ../ # go to top of the working tree
-$ git add # all files related to the docs that just got created/updated (eg. docs/*, index.html files, etc) (do NOT add common/asconstants.rb)
-$ git commit # with appropriate commit message
-$  git subtree push --prefix docs origin gh-pages
-( or, if you get a FF error )
-$ git push origin `git subtree split --prefix docs master`:gh-pages --force
+  $ cd ../ # go to top of the working tree
+  $ git add # all files related to the docs that just got created/updated (eg. docs/*, index.html files, etc) (do NOT add common/asconstants.rb)
+  $ git commit # with appropriate commit message
+  $  git subtree push --prefix docs origin gh-pages
+  ( or, if you get a FF error )
+  $ git push origin `git subtree split --prefix docs master`:gh-pages --force
 ```
 
 10. Now merge in the docs directory back into master by committing the new-document
@@ -155,10 +154,10 @@ $ git push --tags
 ## Build the release announcement
 
 The release announcement needs to have all the tickets that make up the
-changelog for the replease. In the past, this list has been written into
+changelog for the release. In the past, this list has been written into
 markdown to add in the Github release page.
 
-An easy way to do this is to export all the relevent tickets in JIRA ( that is,
+An easy way to do this is to export all the relevant tickets in JIRA ( that is,
 all tickets accepted since the last release  ). Then use the following script
 to make a markdown file:
 
